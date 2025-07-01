@@ -33,3 +33,7 @@ aiohttp
 aioredis
 cachetools
 tenacity
+pytest
+pytest-flask
+requests
+pytest-asyncio

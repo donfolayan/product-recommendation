@@ -4,6 +4,7 @@ models/checkpoint_epoch_50.pth
 logs
 notebooks/*
 data
+raw_images/
 
 __pycache__/
 *.pyc
@@ -39,6 +40,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+plan/
+plan/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
