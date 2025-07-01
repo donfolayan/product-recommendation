@@ -8,6 +8,8 @@ from flask import Blueprint, request, jsonify, current_app
 from src.utils.model_loader import load_model
 from src.services.recommendation_service import RecommendationService
 from src.utils.logging_utils import setup_logger
+from src.error_handlers import create_error_response
+from src.initialization import model, label_mapping, transform
 
 # Set up logging
 logger = setup_logger(__name__, Path('logs'))
@@ -20,15 +22,6 @@ if str(project_root) not in sys.path:
 # Initialize blueprint
 image_bp = Blueprint('image', __name__)
 
-# Initialize model and label mapping
-try:
-    model, label_mapping = load_model()
-    logger.info("Model loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load model: {str(e)}")
-    model = None
-    label_mapping = None
-
 # Image preprocessing
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -36,7 +29,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-@image_bp.route('/detect-product', methods=['POST'])
+@image_bp.route('/product-detections', methods=['POST'])
 def detect_product():
     """
     Detect product from image and find similar products.
@@ -48,22 +41,16 @@ def detect_product():
         - similar_products: List of similar products with their descriptions
     """
     if model is None or label_mapping is None:
-        return jsonify({
-            'error': 'Model not loaded'
-        }), 500
+        return create_error_response('Model not loaded', 500)
     
     try:
         # Check if image file is present
         if 'image' not in request.files:
-            return jsonify({
-                'error': 'No image file provided'
-            }), 400
+            return create_error_response('No image file provided', 400)
             
         image_file = request.files['image']
         if image_file.filename == '':
-            return jsonify({
-                'error': 'No selected file'
-            }), 400
+            return create_error_response('No selected file', 400)
             
         # Get top_k parameter
         top_k = request.args.get('top_k', default=5, type=int)
@@ -123,6 +110,4 @@ def detect_product():
         
     except Exception as e:
         logger.error(f"Processing error: {str(e)}")
-        return jsonify({
-            'error': str(e)
-        }), 500 
+        return create_error_response(str(e), 500) 
