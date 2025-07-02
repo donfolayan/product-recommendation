@@ -1,5 +1,5 @@
 import os
-import logging
+from src.utils.logging_utils import setup_logger
 import requests
 from bs4 import BeautifulSoup
 from PIL import Image
@@ -12,23 +12,14 @@ import pandas as pd
 import random
 import time
 import json
-from datetime import datetime, timedelta
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 import aiohttp
 import asyncio
 import io
-import hashlib
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('log/scraper.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+# Set up logging using the project utility
+logger = setup_logger(__name__, Path('log'))
 
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -329,7 +320,7 @@ class AmazonScraper:
 
             # If we already have enough images, skip searching
             if saved_count >= 50:
-                logger.info(f"Already have 50 images, skipping search")
+                logger.info("Already have 50 images, skipping search")
                 return True
 
             # Generate search terms only if we need more images
@@ -340,7 +331,7 @@ class AmazonScraper:
             for term in search_terms:
                 # Check if we have enough images before starting a new search term
                 if saved_count >= 50:
-                    logger.info(f"Already have 50 images, stopping search")
+                    logger.info("Already have 50 images, stopping search")
                     break
                     
                 logger.info(f"Searching for term: {term}")
@@ -357,7 +348,7 @@ class AmazonScraper:
                 
                 for img in img_elements:
                     if saved_count >= 50:
-                        logger.info(f"Already have 50 images, stopping image processing")
+                        logger.info("Already have 50 images, stopping image processing")
                         break
                         
                     try:

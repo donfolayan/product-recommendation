@@ -1,5 +1,4 @@
 import pandas as pd
-import re
 
 def clean_quantity(df: pd.DataFrame) -> pd.DataFrame:
     """Standardize Quantity: remove non-numeric, convert to int"""

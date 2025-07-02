@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class CNNModel(nn.Module):
     """CNN model for product classification"""

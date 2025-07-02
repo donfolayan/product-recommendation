@@ -1,10 +1,8 @@
-import os
 import sys
 from pathlib import Path
-import logging
+from src.utils.logging_utils import setup_logger
 import argparse
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
@@ -14,20 +12,13 @@ import torchvision.transforms as transforms
 from PIL import Image
 from tqdm import tqdm
 import json
-from datetime import datetime
 import traceback
-import random
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
 from src.models.cnn_model import CNNModel
-from src.utils.logging_utils import setup_logger
-
-# Set up logging
-def setup_logging(log_dir):
-    return setup_logger(__name__, log_dir)
 
 class ProductDataset(Dataset):
     """Dataset for product images"""
@@ -181,10 +172,9 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
     try:
         # Convert project root to Path object
         project_root = Path(project_root_str)
-        
         # Set up logging
         log_dir = project_root / 'logs'
-        logger = setup_logging(log_dir)
+        logger = setup_logger(__name__, log_dir)
         
         # Load and preprocess data
         data_file = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'

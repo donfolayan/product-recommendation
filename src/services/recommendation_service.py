@@ -1,20 +1,18 @@
 import re
-from typing import Tuple, List, Dict, Any, Optional
-import logging
+from typing import Any
+from src.utils.logging_utils import setup_logger
 from sentence_transformers import SentenceTransformer
 import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 from cachetools import TTLCache
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from functools import lru_cache
 from tenacity import retry, stop_after_attempt, wait_exponential
-import json
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging using the project utility
+logger = setup_logger(__name__, Path('logs'))
 
 class RecommendationService:
     model: SentenceTransformer

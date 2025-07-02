@@ -1,5 +1,5 @@
-from flask import jsonify, Response  # type: ignore
-from typing import Optional, Dict, Any, Tuple, Union
+from flask import jsonify  # type: ignore
+from typing import Any
 
 def create_error_response(message: str, status_code: int = 500, details: Any = None) -> Any:
     """Create a standardized error response."""

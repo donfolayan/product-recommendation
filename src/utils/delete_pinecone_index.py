@@ -1,10 +1,8 @@
 # Import Pinecone and envvar for vector database operations
 
 from pinecone import Pinecone
-from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 import os
-import time
 import sys
 from pathlib import Path
 import logging

@@ -2,7 +2,6 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.logging_utils import setup_logger
-from pathlib import Path
 
 def test_setup_logger_console():
     logger = setup_logger('test_logger')

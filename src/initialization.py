@@ -1,7 +1,6 @@
 import os
-from dotenv import load_dotenv
+from src.utils.logging_utils import setup_logger
 from concurrent.futures import ThreadPoolExecutor
-import logging
 import asyncio
 from typing import Optional
 from src.utils.handwriting_ocr import HandwritingOCR
@@ -11,13 +10,13 @@ from src.utils.model_loader import load_model
 from src.models.cnn_model import CNNModel
 from torchvision import transforms  # type: ignore
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Configure logging (optionally use setup_logger utility in future refactor)
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging using the project utility
+logger = setup_logger(__name__, Path('logs'))
 
 def load_environment():
-    """Load environment variables from .env file."""
+    """Load environment variables from .env file using utility."""
     load_dotenv()
 
 def create_thread_pool(max_workers=4):

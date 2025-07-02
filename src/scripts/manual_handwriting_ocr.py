@@ -1,11 +1,8 @@
-import os
 import sys
-import json
-import logging
 import time
 from pathlib import Path
-import pandas as pd
 from datetime import datetime
+from src.utils.logging_utils import setup_logger
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -13,9 +10,8 @@ sys.path.append(str(project_root))
 
 from src.utils.handwriting_ocr import HandwritingOCR
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging using the project utility
+logger = setup_logger(__name__, Path('logs'))
 
 def run_ocr_tests(test_dir: Path, output_dir: Path, use_gpu: bool = False):
     """Run OCR tests on all images in the test directory.

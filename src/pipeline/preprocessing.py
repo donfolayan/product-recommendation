@@ -1,4 +1,3 @@
-from typing import Any
 import pandas as pd
 from src.utils.data_cleaning import clean_dataset
 

@@ -1,12 +1,10 @@
-import os
 import sys
 import subprocess
-import logging
 from pathlib import Path
+from src.utils.logging_utils import setup_logger
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Set up logging using the project utility
+logger = setup_logger(__name__, Path('logs'))
 
 def install_dependencies():
     """Install required Python packages."""

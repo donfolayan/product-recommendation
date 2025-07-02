@@ -3,7 +3,6 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 import io
 import pytest
-from flask import Flask
 from app import app as flask_app
 
 @pytest.fixture

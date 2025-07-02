@@ -109,7 +109,7 @@ for start_idx in range(0, total_records, CHUNK_SIZE):
     
     # Upsert this chunk
     if vectors:  # Only try to upsert if we have valid vectors
-        print(f"Uploading chunk to Pinecone...")
+        print("Uploading chunk to Pinecone...")
         try:
             # Upsert the vectors directly
             index.upsert(vectors=vectors)

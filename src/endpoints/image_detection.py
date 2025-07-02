@@ -5,8 +5,6 @@ from torchvision import transforms  # type: ignore
 from PIL import Image
 from flask import Blueprint, request, jsonify, current_app, Response
 from typing import Union, Tuple
-from src.utils.model_loader import load_model
-from src.services.recommendation_service import RecommendationService
 from src.utils.logging_utils import setup_logger
 from src.error_handlers import create_error_response
 from src.initialization import model, label_mapping, transform

@@ -1,8 +1,7 @@
 import logging
-from typing import Dict, List, Tuple, Optional
+from typing import Optional
 from spellchecker import SpellChecker
 from sentence_transformers import SentenceTransformer
-import numpy as np
 from collections import defaultdict
 import re
 from pathlib import Path

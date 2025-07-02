@@ -1,10 +1,8 @@
-import os
 import time
 import pandas as pd  # type: ignore
-import logging
 from pinecone import Pinecone, ServerlessSpec  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Optional, Any
 from pathlib import Path
 from .logging_utils import setup_logger
 import sys
@@ -64,7 +62,7 @@ class VectorDBManager:
             self._initialize_pinecone()
             self._initialize_model()
             self._setup_progress_tracking()
-        except Exception as e:
+        except Exception:
             logger.error("Failed to initialize VectorDBManager", exc_info=True)
             raise
             
@@ -114,7 +112,7 @@ class VectorDBManager:
                 self.uploaded_ids = []
                 logger.info("Starting fresh upload")
                 
-        except Exception as e:
+        except Exception:
             logger.error("Failed to setup progress tracking", exc_info=True)
             raise
             
@@ -181,7 +179,7 @@ class VectorDBManager:
             if vectors:
                 await self._upload_vectors_async(vectors)
                 
-        except Exception as e:
+        except Exception:
             logger.error("Error processing chunk", exc_info=True)
                 
     async def _upload_vectors_async(self, vectors: list[dict[str, Any]]) -> None:
@@ -204,7 +202,7 @@ class VectorDBManager:
                 lambda: pd.DataFrame({'StockCode': self.uploaded_ids}).to_csv(self.progress_file, index=False)
             )
             
-        except Exception as e:
+        except Exception:
             logger.error("Error uploading vectors", exc_info=True)
             await self._save_failed_records_async(vectors)
                 
@@ -231,5 +229,5 @@ class VectorDBManager:
             )
             logger.warning(f"Saved {len(vectors)} failed records")
             
-        except Exception as e:
+        except Exception:
             logger.error("Error saving failed records", exc_info=True)

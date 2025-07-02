@@ -1,17 +1,14 @@
 import os
-import logging
 import torch
 import easyocr  # type: ignore
 import numpy as np
 from PIL import Image  # type: ignore
 from pathlib import Path
-from typing import Union, Tuple, Optional, Dict, List, Any, cast
+from typing import Union, Any, cast
 import cv2
 from .enhanced_spell_checker import EnhancedSpellChecker
 import re
-from collections import defaultdict
 import google.generativeai as genai  # type: ignore
-from dotenv import load_dotenv
 from .logging_utils import setup_logger
 
 # Set up logging
