@@ -29,7 +29,7 @@ export default function TextQueryPage() {
       setError(null);
       setResponse(null);
       
-      const res = await fetch(`${backendUrl}/api/product-recommendation`, {
+      const res = await fetch(`${backendUrl}/api/v1/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
@@ -68,7 +68,7 @@ export default function TextQueryPage() {
         </div>
         <h1 className="text-3xl font-bold text-gray-900">Text-Based Product Query</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Describe what you're looking for in natural language and get intelligent product recommendations 
+          Describe what you&apos;re looking for in natural language and get intelligent product recommendations 
           powered by our AI system.
         </p>
       </div>
@@ -80,8 +80,8 @@ export default function TextQueryPage() {
             <span>Search Products</span>
           </CardTitle>
           <CardDescription>
-            Enter your product query in plain English. For example: "I need wireless headphones for running" 
-            or "Looking for a laptop for graphic design under $1500"
+            Enter your product query in plain English. For example: &quot;I need wireless headphones for running&quot; 
+            or &quot;Looking for a laptop for graphic design under $1500&quot;
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

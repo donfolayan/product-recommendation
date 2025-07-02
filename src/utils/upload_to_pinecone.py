@@ -1,10 +1,11 @@
-from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone, ServerlessSpec  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
 from dotenv import load_dotenv
 import os
 import time
-import pandas as pd
+import pandas as pd  # type: ignore
 from pathlib import Path
+from typing import Any
 
 # Set up paths
 DATA_DIR = Path(__file__).parent.parent / 'data'
@@ -50,7 +51,7 @@ print("Model loaded successfully")
 
 # Load or create progress tracking
 if PROGRESS_FILE.exists():
-    uploaded_ids = pd.read_csv(PROGRESS_FILE)['StockCode'].tolist()
+    uploaded_ids = pd.read_csv(PROGRESS_FILE)['StockCode'].tolist()  # type: ignore
     print(f"Found {len(uploaded_ids)} previously uploaded records")
 else:
     uploaded_ids = []
@@ -72,33 +73,33 @@ for start_idx in range(0, total_records, CHUNK_SIZE):
     chunk_df = df.iloc[start_idx:end_idx]
     
     # Filter out already uploaded records
-    chunk_df = chunk_df[~chunk_df['StockCode'].isin(uploaded_ids)]
+    chunk_df = chunk_df[~chunk_df['StockCode'].isin(uploaded_ids)]  # type: ignore
     
     if len(chunk_df) == 0:
         print("All records in this chunk already uploaded, skipping...")
         continue
     
     # Prepare data for this chunk
-    vectors = []
+    vectors: list[dict[str, Any]] = []
     for _, row in chunk_df.iterrows():
         try:
             # Create a text representation of the product
-            product_text = f"{row['Description']} {row['Country']}"
+            product_text = f"{row['Description']} {row['Country']}"  # type: ignore
             
             # Generate embedding for the product text
-            embedding = model.encode(product_text)
+            embedding = model.encode(product_text)  # type: ignore
             
             # Create the vector record
             vector = {
-                "id": str(row['StockCode']),
-                "values": embedding.tolist(),
+                "id": str(row['StockCode']),  # type: ignore
+                "values": embedding.tolist(),  # type: ignore
                 "metadata": {
-                    "InvoiceNo": str(row['InvoiceNo']),
-                    "CustomerID": str(row['CustomerID']),
-                    "Quantity": float(row['Quantity']),
-                    "UnitPrice": float(row['UnitPrice']),
-                    "Description": str(row['Description']),
-                    "Country": str(row['Country'])
+                    "InvoiceNo": str(row['InvoiceNo']),  # type: ignore
+                    "CustomerID": str(row['CustomerID']),  # type: ignore
+                    "Quantity": float(row['Quantity']),  # type: ignore
+                    "UnitPrice": float(row['UnitPrice']),  # type: ignore
+                    "Description": str(row['Description']),  # type: ignore
+                    "Country": str(row['Country'])  # type: ignore
                 }
             }
             vectors.append(vector)

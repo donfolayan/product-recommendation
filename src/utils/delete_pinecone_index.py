@@ -18,7 +18,7 @@ if str(project_root) not in sys.path:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def delete_pinecone_index():
+def delete_pinecone_index() -> None:
     """Delete the Pinecone index."""
     try:
         # Load environment variables

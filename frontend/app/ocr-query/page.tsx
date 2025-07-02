@@ -47,7 +47,7 @@ export default function OCRQueryPage() {
       setError(null);
       setResponse(null);
       
-      const res = await fetch(`${backendUrl}/api/ocr-query`, {
+      const res = await fetch(`${backendUrl}/api/v1/ocr-query`, {
         method: 'POST',
         body: formData
       });

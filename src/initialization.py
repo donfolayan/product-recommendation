@@ -3,11 +3,13 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import asyncio
+from typing import Optional
 from src.utils.handwriting_ocr import HandwritingOCR
 from src.utils.vector_db_utils import VectorDBManager
 from src.services.recommendation_service import RecommendationService
 from src.utils.model_loader import load_model
-from torchvision import transforms
+from src.models.cnn_model import CNNModel
+from torchvision import transforms  # type: ignore
 from pathlib import Path
 
 # Configure logging (optionally use setup_logger utility in future refactor)
@@ -52,13 +54,14 @@ async def initialize_services(executor=None):
         raise
 
 # Model and label mapping initialization
+model: Optional[CNNModel] = None
+label_mapping: Optional[dict[str, str]] = None
+
 try:
     model, label_mapping = load_model()
     logger.info("Model loaded successfully")
 except Exception as e:
     logger.error(f"Failed to load model: {str(e)}")
-    model = None
-    label_mapping = None
 
 # Image preprocessing transform
 transform = transforms.Compose([

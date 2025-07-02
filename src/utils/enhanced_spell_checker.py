@@ -13,6 +13,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EnhancedSpellChecker:
+    spell_checker: SpellChecker
+    model: Optional[SentenceTransformer]
+    product_dictionary: set[str]
+    ocr_patterns: dict[str, str]
+
     def __init__(self, model: Optional[SentenceTransformer] = None):
         """Initialize the enhanced spell checker.
         
@@ -35,7 +40,7 @@ class EnhancedSpellChecker:
                 logger.warning(f"Could not initialize BERT model: {str(e)}")
                 self.model = None
         
-    def _initialize_patterns(self):
+    def _initialize_patterns(self) -> None:
         """Initialize common OCR patterns and corrections."""
         # Common OCR/typing patterns
         self.ocr_patterns.update({
@@ -62,7 +67,7 @@ class EnhancedSpellChecker:
             r'TRACK': 'tracker',
         })
         
-    def _load_product_terms(self):
+    def _load_product_terms(self) -> None:
         """Load product terms from the dataset."""
         try:
             terms_path = Path(__file__).parent.parent / 'data' / 'dataset' / 'product_terms.txt'
@@ -76,7 +81,7 @@ class EnhancedSpellChecker:
         except Exception as e:
             logger.error(f"Error loading product terms: {str(e)}")
             
-    def add_product_terms(self, terms: List[str]):
+    def add_product_terms(self, terms: list[str]) -> None:
         """Add product-specific terms to the dictionary.
         
         Args:

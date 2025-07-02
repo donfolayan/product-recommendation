@@ -1,10 +1,10 @@
 import sys
 from pathlib import Path
 import torch
-from torchvision import transforms
+from torchvision import transforms  # type: ignore
 from PIL import Image
-import numpy as np
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, Response
+from typing import Union, Tuple
 from src.utils.model_loader import load_model
 from src.services.recommendation_service import RecommendationService
 from src.utils.logging_utils import setup_logger
@@ -30,7 +30,7 @@ transform = transforms.Compose([
 ])
 
 @image_bp.route('/product-detections', methods=['POST'])
-def detect_product():
+def detect_product() -> Union[Response, Tuple[Response, int]]:
     """
     Detect product from image and find similar products.
     
@@ -74,7 +74,10 @@ def detect_product():
         # Get similar products using recommendation service
         try:
             # Get recommendation service from current_app
-            recommendation_service = current_app.recommendation_service
+            recommendation_service = getattr(current_app, 'recommendation_service', None)
+            if recommendation_service is None:
+                logger.warning("Recommendation service not available")
+                raise RuntimeError("Recommendation service not initialized")
             
             # Use the predicted class as the query
             products, response = recommendation_service.get_recommendations(

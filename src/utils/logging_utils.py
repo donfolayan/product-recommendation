@@ -2,8 +2,9 @@ import logging
 import sys
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
-def setup_logger(name: str, log_dir: Path = None) -> logging.Logger:
+def setup_logger(name: str, log_dir: Optional[Path] = None) -> logging.Logger:
     """Set up logging configuration for a specific module.
     
     Args:

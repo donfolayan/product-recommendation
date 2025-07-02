@@ -33,7 +33,7 @@ def run_ocr_tests(test_dir: Path, output_dir: Path, use_gpu: bool = False):
     model_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info("Initializing OCR with CPU optimizations...")
-    ocr = HandwritingOCR(use_gpu=False, model_dir=str(model_dir))
+    ocr = HandwritingOCR(use_gpu=False)
     
     # Get all image files
     image_files = list(test_dir.glob("*.jpg")) + list(test_dir.glob("*.jpeg")) + list(test_dir.glob("*.png"))

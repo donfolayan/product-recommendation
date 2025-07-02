@@ -37,3 +37,6 @@ pytest
 pytest-flask
 requests
 pytest-asyncio
+mypy
+pyspellchecker
+google-generativeai

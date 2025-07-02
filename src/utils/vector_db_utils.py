@@ -1,9 +1,9 @@
 import os
 import time
-import pandas as pd
+import pandas as pd  # type: ignore
 import logging
-from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone, ServerlessSpec  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
 from typing import List, Dict, Optional, Any, Tuple
 from pathlib import Path
 from .logging_utils import setup_logger
@@ -24,6 +24,19 @@ if str(project_root) not in sys.path:
 class VectorDBManager:
     """Manages vector database operations for product data."""
     
+    api_key: str
+    index_name: str
+    pc: Pinecone | None
+    index: Any
+    model: SentenceTransformer | None
+    uploaded_ids: list[str]
+    progress_dir: Path
+    failed_dir: Path
+    progress_file: Path
+    executor: ThreadPoolExecutor
+    vector_cache: TTLCache
+    model_cache: TTLCache
+
     def __init__(self, api_key: str, index_name: str = "product-vectors"):
         """Initialize the VectorDBManager."""
         self.api_key = api_key
@@ -82,8 +95,10 @@ class VectorDBManager:
             logger.info("Model loaded")
             
     @lru_cache(maxsize=1000)
-    def encode_text(self, text: str) -> List[float]:
+    def encode_text(self, text: str) -> list[float]:
         """Encode text to vector with caching."""
+        if self.model is None:
+            raise RuntimeError("Model not initialized. Call initialize() first.")
         return self.model.encode(text).tolist()
             
     def _setup_progress_tracking(self) -> None:
@@ -103,7 +118,7 @@ class VectorDBManager:
             logger.error("Failed to setup progress tracking", exc_info=True)
             raise
             
-    async def create_vector_async(self, row: pd.Series) -> Optional[Dict[str, Any]]:
+    async def create_vector_async(self, row: pd.Series) -> dict[str, Any] | None:
         """Create a vector from a single row of data asynchronously."""
         try:
             # Validate numeric fields
@@ -119,6 +134,8 @@ class VectorDBManager:
                 embedding = self.vector_cache[cache_key]
             else:
                 # Run encoding in thread pool
+                if self.model is None:
+                    raise RuntimeError("Model not initialized. Call initialize() first.")
                 embedding = await asyncio.get_event_loop().run_in_executor(
                     self.executor,
                     self.model.encode,
@@ -167,14 +184,13 @@ class VectorDBManager:
         except Exception as e:
             logger.error("Error processing chunk", exc_info=True)
                 
-    async def _upload_vectors_async(self, vectors: List[Dict[str, Any]]) -> None:
+    async def _upload_vectors_async(self, vectors: list[dict[str, Any]]) -> None:
         """Upload vectors to Pinecone and update progress tracking asynchronously."""
         try:
             # Run Pinecone upsert in thread pool
             await asyncio.get_event_loop().run_in_executor(
                 self.executor,
-                self.index.upsert,
-                vectors=vectors
+                lambda: self.index.upsert(vectors=vectors)
             )
             logger.info(f"Uploaded {len(vectors)} vectors")
             
@@ -185,16 +201,14 @@ class VectorDBManager:
             # Run CSV update in thread pool
             await asyncio.get_event_loop().run_in_executor(
                 self.executor,
-                pd.DataFrame({'StockCode': self.uploaded_ids}).to_csv,
-                self.progress_file,
-                index=False
+                lambda: pd.DataFrame({'StockCode': self.uploaded_ids}).to_csv(self.progress_file, index=False)
             )
             
         except Exception as e:
             logger.error("Error uploading vectors", exc_info=True)
             await self._save_failed_records_async(vectors)
                 
-    async def _save_failed_records_async(self, vectors: List[Dict[str, Any]]) -> None:
+    async def _save_failed_records_async(self, vectors: list[dict[str, Any]]) -> None:
         """Save failed records for retry asynchronously."""
         try:
             failed_records = pd.DataFrame([{
@@ -213,9 +227,7 @@ class VectorDBManager:
             # Run CSV save in thread pool
             await asyncio.get_event_loop().run_in_executor(
                 self.executor,
-                failed_records.to_csv,
-                file_path,
-                index=False
+                lambda: failed_records.to_csv(file_path, index=False)
             )
             logger.warning(f"Saved {len(vectors)} failed records")
             

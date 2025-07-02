@@ -6,7 +6,7 @@ from src.models.cnn_model import CNNModel
 
 logger = logging.getLogger(__name__)
 
-def load_model():
+def load_model() -> tuple[CNNModel, dict[str, str]]:
     try:
         project_root = Path(__file__).parent.parent.parent
         model_path = project_root / 'models' / 'best_model.pth'

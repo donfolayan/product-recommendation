@@ -17,6 +17,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RecommendationService:
+    model: SentenceTransformer
+    index: Any
+    sensitive_patterns: list[str]
+    max_query_length: int
+    min_query_length: int
+    executor: ThreadPoolExecutor
+    cache: TTLCache
+    gemini_api_key: str | None
+    gemini_client: genai.GenerativeModel | None
+
     def __init__(self, model: SentenceTransformer, index: Any):
         self.model = model
         self.index = index
@@ -45,7 +55,7 @@ class RecommendationService:
             self.gemini_client = None
 
     @lru_cache(maxsize=1000)
-    def _validate_query(self, query: str) -> Tuple[bool, str]:
+    def _validate_query(self, query: str) -> tuple[bool, str]:
         """Validate the query for security and quality with caching."""
         if not query or not isinstance(query, str):
             return False, "Please provide a valid search query."
@@ -70,7 +80,7 @@ class RecommendationService:
 
         return True, query
 
-    def _sanitize_product_data(self, product: Dict) -> Dict:
+    def _sanitize_product_data(self, product: dict) -> dict:
         """Sanitize product data."""
         try:
             return {
@@ -91,7 +101,7 @@ class RecommendationService:
             }
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    async def _generate_response(self, products: List[Dict[str, Any]], query: str) -> str:
+    async def _generate_response(self, products: list[dict[str, Any]], query: str) -> str:
         """Generate response using Gemini or fallback to basic description."""
         if not products:
             return "No matching products found."
@@ -132,7 +142,7 @@ class RecommendationService:
             logger.error(f"Gemini response generation failed: {str(e)}")
             return self._generate_fallback_response(products)
 
-    def _generate_fallback_response(self, products: List[Dict]) -> str:
+    def _generate_fallback_response(self, products: list[dict]) -> str:
         """Generate a fallback response when Gemini is not available."""
         if not products:
             return "No matching products found."
@@ -145,7 +155,7 @@ class RecommendationService:
 
         return " ".join(descriptions)
 
-    async def get_recommendations_async(self, query: str, top_k: int = 5) -> Tuple[List[Dict], str]:
+    async def get_recommendations_async(self, query: str, top_k: int = 5) -> tuple[list[dict], str]:
         """
         Get product recommendations asynchronously with caching and rate limiting.
         
@@ -208,7 +218,7 @@ class RecommendationService:
             logger.error(f"Error in get_recommendations: {str(e)}", exc_info=True)
             return [], "An error occurred while processing your request. Please try again later."
 
-    def get_recommendations(self, query: str, top_k: int = 5) -> Tuple[List[Dict], str]:
+    def get_recommendations(self, query: str, top_k: int = 5) -> tuple[list[dict], str]:
         """
         Synchronous wrapper for get_recommendations_async.
         """
