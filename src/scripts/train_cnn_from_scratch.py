@@ -262,10 +262,25 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         # Create model directory
         model_dir = project_root / 'models'
         
+        # Track best validation accuracy
+        best_val_acc = 0.0
+        
         # Train the model
         train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
         
         logger.info("Training completed successfully")
+        
+        # Save the stock_code_to_label mapping for evaluation
+        mapping_path = model_dir / 'stockcode_to_index.json'
+        with open(mapping_path, 'w') as f:
+            json.dump(stock_code_to_label, f)
+        logger.info(f"Saved StockCode-to-index mapping to {mapping_path}")
+        
+        # Return best validation accuracy and number of epochs
+        return {
+            "best_val_acc": best_val_acc,
+            "num_epochs": num_epochs
+        }
         
     except Exception as e:
         logger.error(f"Error in main: {str(e)}")

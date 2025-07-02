@@ -12,7 +12,7 @@ from src.error_handlers import create_error_response
 from src.initialization import model, label_mapping, transform
 
 # Set up logging
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('log'))
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
