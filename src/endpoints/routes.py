@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, render_template, current_app as app
 import asyncio
+from flask import Blueprint, request, jsonify, current_app as app
 from functools import wraps
 from src.error_handlers import create_error_response
 
@@ -11,12 +11,7 @@ def async_route(f):
         return asyncio.run(f(*args, **kwargs))
     return wrapped
 
-@main_bp.route('/')
-def home():
-    """Home page route."""
-    return render_template('index.html')
-
-@main_bp.route('/api/v1/recommendations', methods=['POST'])
+@main_bp.route('/recommendations', methods=['POST'])
 @async_route
 async def product_recommendation():
     try:
@@ -40,7 +35,7 @@ async def product_recommendation():
         app.logger.error(f"Error in product_recommendation endpoint: {str(e)}", exc_info=True)
         return create_error_response('An error occurred while processing your request')
 
-@main_bp.route('/api/v1/ocr-query', methods=['POST'])
+@main_bp.route('/ocr-query', methods=['POST'])
 @async_route
 async def process_ocr_query():
     try:
@@ -96,7 +91,7 @@ async def process_ocr_query():
             }
         })
 
-@main_bp.route('/api/v1/health', methods=['GET'])
+@main_bp.route('/health', methods=['GET'])
 def health_check():
     ocr = getattr(app, 'ocr', None)
     model = getattr(app, 'cnn_model', None)

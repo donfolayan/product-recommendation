@@ -47,7 +47,7 @@ export default function ImageUploadPage() {
       setError(null);
       setResponse(null);
       
-      const res = await fetch(`${backendUrl}/api/v1/detect-product`, {
+      const res = await fetch(`${backendUrl}/api/v1/product-detections`, {
         method: 'POST',
         body: formData
       });

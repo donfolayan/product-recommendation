@@ -12,7 +12,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from pathlib import Path
 
 # Set up logging using the project utility
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/recommendation_service'))
 
 class RecommendationService:
     model: SentenceTransformer

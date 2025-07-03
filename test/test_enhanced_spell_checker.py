@@ -2,7 +2,6 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.enhanced_spell_checker import EnhancedSpellChecker
-import pytest
 
 class DummyModel:
     def encode(self, text, convert_to_tensor=False):

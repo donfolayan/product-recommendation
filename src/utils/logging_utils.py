@@ -25,7 +25,6 @@ def setup_logger(name: str, log_dir: Optional[Path] = None) -> logging.Logger:
     file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     console_formatter = logging.Formatter('%(levelname)s: %(message)s')
     
-    # Create console handler (always present)
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(console_formatter)
@@ -41,3 +40,8 @@ def setup_logger(name: str, log_dir: Optional[Path] = None) -> logging.Logger:
         logger.addHandler(file_handler)
     
     return logger 
+
+
+def init_app_logger() -> logging.Logger:
+    """Set up and return the logger for the main app."""
+    return setup_logger('app', Path('logs/app')) 

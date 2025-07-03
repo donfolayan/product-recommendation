@@ -12,7 +12,7 @@ import asyncio
 from functools import lru_cache
 
 # Set up logging
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/vector_db'))
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent

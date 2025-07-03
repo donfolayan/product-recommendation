@@ -2,7 +2,7 @@ import os
 from src.utils.logging_utils import setup_logger
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 from src.utils.handwriting_ocr import HandwritingOCR
 from src.utils.vector_db_utils import VectorDBManager
 from src.services.recommendation_service import RecommendationService
@@ -13,17 +13,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Set up logging using the project utility
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/app'))
 
 def load_environment():
     """Load environment variables from .env file using utility."""
     load_dotenv()
 
-def create_thread_pool(max_workers=4):
+def create_thread_pool(max_workers: int = 4) -> ThreadPoolExecutor:
     """Create a thread pool executor for async operations."""
     return ThreadPoolExecutor(max_workers=max_workers)
 
-def initialize_ocr(use_gpu=False):
+def initialize_ocr(use_gpu: bool = False) -> Optional[HandwritingOCR]:
     """Initialize the HandwritingOCR service."""
     try:
         ocr = HandwritingOCR(use_gpu=use_gpu)
@@ -33,7 +33,7 @@ def initialize_ocr(use_gpu=False):
         logger.error(f"Failed to initialize OCR: {str(e)}")
         return None
 
-async def initialize_services(executor=None):
+async def initialize_services(executor: Optional[ThreadPoolExecutor] = None) -> Tuple[RecommendationService, VectorDBManager]:
     """Initialize VectorDBManager and RecommendationService asynchronously."""
     try:
         pinecone_api_key = os.getenv('PINECONE_API_KEY')

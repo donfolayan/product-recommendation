@@ -12,7 +12,10 @@ import google.generativeai as genai  # type: ignore
 from .logging_utils import setup_logger
 
 # Set up logging
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/handwriting_ocr'))
+
+# At the top of the file, after imports
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 
 class HandwritingOCR:
     device: torch.device
@@ -107,7 +110,7 @@ class HandwritingOCR:
             rgb_image = cv2.cvtColor(dilated, cv2.COLOR_GRAY2RGB)
             
             # Save debug image
-            debug_path = Path('debug')
+            debug_path = Path(PROJECT_ROOT) / 'debug'
             debug_path.mkdir(exist_ok=True)
             cv2.imwrite(str(debug_path / 'preprocessed.png'), rgb_image)
             

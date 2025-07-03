@@ -4,7 +4,7 @@ import easyocr
 from src.utils.logging_utils import setup_logger
 
 # Set up logging using the project utility
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/app'))
 
 def setup_easyocr_models():
     """Download and set up EasyOCR English model."""

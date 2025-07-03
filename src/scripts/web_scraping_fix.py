@@ -18,8 +18,10 @@ import asyncio
 import io
 from pathlib import Path
 
-# Set up logging using the project utility
-logger = setup_logger(__name__, Path('log'))
+# Ensure log directory exists
+log_dir = Path(__file__).resolve().parent.parent.parent / 'logs/scraper'
+log_dir.mkdir(parents=True, exist_ok=True)
+logger = setup_logger(__name__, log_dir)
 
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',

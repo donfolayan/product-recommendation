@@ -58,8 +58,7 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
         logger.info(f"Previous best validation accuracy: {best_val_acc:.2f}%")
 
     for epoch in range(start_epoch, num_epochs):
-        logger.info(f'Epoch {epoch+1}/{num_epochs}:
-')
+        logger.info(f'Epoch {epoch+1}/{num_epochs}:')
         # Training phase
         model.train()
         train_loss = 0.0
@@ -115,7 +114,10 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
             best_val_acc = val_acc
             torch.save(model.state_dict(), model_dir / 'best_model.pth')
             logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}%')
-        # Save checkpoint
+            best_epoch = epoch + 1
+        
+        # Save checkpoint for this epoch
+        checkpoint_path = model_dir / f'checkpoint_epoch_{epoch+1}.pth'
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
@@ -124,7 +126,27 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
             'val_loss': val_loss,
             'train_acc': train_acc,
             'val_acc': val_acc
-        }, model_dir / f'checkpoint_epoch_{epoch+1}.pth')
+        }, checkpoint_path)
+
+        # Track top 2 validation accuracies and last epoch
+        if epoch == 0:
+            second_best_val_acc = val_acc
+            second_best_epoch = epoch + 1
+        elif val_acc > second_best_val_acc and (epoch + 1) != best_epoch:
+            second_best_val_acc = val_acc
+            second_best_epoch = epoch + 1
+
+        # After saving, clean up unnecessary checkpoints
+        checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
+        # Always keep best, second best, and last
+        keep_epochs = set([best_epoch, second_best_epoch, num_epochs])
+        for ckpt in checkpoint_files:
+            try:
+                epoch_num = int(ckpt.stem.split('_')[-1])
+                if epoch_num not in keep_epochs:
+                    ckpt.unlink()
+            except Exception as e:
+                logger.warning(f'Could not process checkpoint {ckpt}: {e}')
     return best_val_acc, history
 
 def train_model(
@@ -144,7 +166,7 @@ def train_model(
         Any: Training history or result from the training process.
     """
     project_root = Path(project_root)
-    log_dir = project_root / 'logs'
+    log_dir = project_root / 'logs/training'
     logger = setup_logger(__name__, log_dir)
     data_file = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'
     df = pd.read_csv(data_file)

@@ -3,7 +3,9 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
 import io
 import pytest
-from app import app as flask_app
+from app import create_app
+
+flask_app = create_app()
 
 @pytest.fixture
 def client():

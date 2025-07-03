@@ -4,7 +4,7 @@ from pathlib import Path
 from src.utils.logging_utils import setup_logger
 
 # Set up logging using the project utility
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/app'))
 
 def install_dependencies():
     """Install required Python packages."""

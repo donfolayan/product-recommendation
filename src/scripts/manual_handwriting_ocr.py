@@ -11,7 +11,7 @@ sys.path.append(str(project_root))
 from src.utils.handwriting_ocr import HandwritingOCR
 
 # Set up logging using the project utility
-logger = setup_logger(__name__, Path('logs'))
+logger = setup_logger(__name__, Path('logs/handwriting_ocr'))
 
 def run_ocr_tests(test_dir: Path, output_dir: Path, use_gpu: bool = False):
     """Run OCR tests on all images in the test directory.

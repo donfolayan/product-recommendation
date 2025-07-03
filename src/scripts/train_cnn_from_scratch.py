@@ -150,8 +150,10 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, num_epoch
                 best_val_acc = val_acc
                 torch.save(model.state_dict(), model_dir / 'best_model.pth')
                 logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}%')
+                best_epoch = epoch + 1
             
-            # Save checkpoint
+            # Save checkpoint for this epoch
+            checkpoint_path = model_dir / f'checkpoint_epoch_{epoch+1}.pth'
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -160,7 +162,27 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, num_epoch
                 'val_loss': val_loss,
                 'train_acc': train_acc,
                 'val_acc': val_acc
-            }, model_dir / f'checkpoint_epoch_{epoch+1}.pth')
+            }, checkpoint_path)
+
+            # Track top 2 validation accuracies and last epoch
+            if epoch == 0:
+                second_best_val_acc = val_acc
+                second_best_epoch = epoch + 1
+            elif val_acc > second_best_val_acc and (epoch + 1) != best_epoch:
+                second_best_val_acc = val_acc
+                second_best_epoch = epoch + 1
+
+            # After saving, clean up unnecessary checkpoints
+            checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
+            # Always keep best, second best, and last
+            keep_epochs = set([best_epoch, second_best_epoch, num_epochs])
+            for ckpt in checkpoint_files:
+                try:
+                    epoch_num = int(ckpt.stem.split('_')[-1])
+                    if epoch_num not in keep_epochs:
+                        ckpt.unlink()
+                except Exception as e:
+                    logger.warning(f'Could not process checkpoint {ckpt}: {e}')
             
     except Exception as e:
         logger.error(f"Error in train_model: {str(e)}")
@@ -173,7 +195,7 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         # Convert project root to Path object
         project_root = Path(project_root_str)
         # Set up logging
-        log_dir = project_root / 'logs'
+        log_dir = project_root / 'logs/training'
         logger = setup_logger(__name__, log_dir)
         
         # Load and preprocess data

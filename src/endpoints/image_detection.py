@@ -1,7 +1,7 @@
 import sys
-from pathlib import Path
 import torch
-from torchvision import transforms  # type: ignore
+from pathlib import Path
+from torchvision import transforms
 from PIL import Image
 from flask import Blueprint, request, jsonify, current_app, Response
 from typing import Union, Tuple
@@ -9,8 +9,10 @@ from src.utils.logging_utils import setup_logger
 from src.error_handlers import create_error_response
 from src.initialization import model, label_mapping, transform
 
-# Set up logging
-logger = setup_logger(__name__, Path('log'))
+# Ensure log directory exists
+log_dir = Path(__file__).resolve().parent.parent.parent / 'logs/image_detection'
+log_dir.mkdir(parents=True, exist_ok=True)
+logger = setup_logger(__name__, log_dir)
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
