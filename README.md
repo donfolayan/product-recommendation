@@ -60,7 +60,7 @@ ds_task_1ab/
 
 ## Setup Instructions
 ### Prerequisites
-- Python 3.12+
+- Python <=3.11
 - Node.js & npm
 - Jupyter for notebooks
 

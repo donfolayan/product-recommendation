@@ -16,7 +16,6 @@ opencv-python-headless
 pillow
 tqdm
 Google-Images-Search
-windows-curses
 ipywidgets
 transformers
 easyocr
@@ -25,7 +24,6 @@ google-api-python-client
 google-auth
 google-auth-httplib2 
 Google-Images-Search
-selenium
 torch
 torchvision
 scikit-image
@@ -42,3 +40,4 @@ pyspellchecker
 google-generativeai
 autoflake
 ruff
+pytest
