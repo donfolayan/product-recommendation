@@ -95,6 +95,14 @@ OPENAI_API_KEY=your_openai_key
 - `PINECONE_API_KEY`: For vector DB integration
 - `OPENAI_API_KEY`: For language model features (if used)
 
+
+Create a `.env.local` file in `frontend` with the following:
+```
+NEXT_PUBLIC_BACKEND_URL=your_backend_url
+```
+**Required variables:**
+- `NEXT_PUBLIC_BACKEND_URL` = http://127.0.0.1:5000
+
 ---
 
 ## Running the Project
