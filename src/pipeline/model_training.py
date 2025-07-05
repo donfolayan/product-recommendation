@@ -15,18 +15,8 @@ from typing import Any, List, Union, Optional, Dict
 import json
 from PIL import Image
 
-class ProductDataset(torch.utils.data.Dataset):
-    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None) -> None:
-        self.image_paths = image_paths
-        self.labels = labels
-        self.transform = transform or nn.Sequential()
-    def __len__(self) -> int:
-        return len(self.image_paths)
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, Union[int, str]]:
-        image = Image.open(self.image_paths[idx]).convert('RGB')
-        if self.transform:
-            image = self.transform(image)
-        return image, self.labels[idx]
+# ProductDataset is now imported from .datasets
+from .datasets import ProductDataset
 
 def run_training_loop(
     model: nn.Module, 

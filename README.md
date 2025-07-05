@@ -7,15 +7,18 @@ This project is a modular system for product recommendation, OCR-based query pro
 - Jupyter notebooks for data science and model development
 - Integration with Pinecone for vector search
 - End-to-end workflow from data cleaning to model inference
+- Modular pipeline system for easy model training and experimentation
 
 ---
 
 ## Table of Contents
 - [Project Structure](#project-structure)
 - [How Each Requirement is Implemented](#how-each-requirement-is-implemented)
+- [Modular Pipeline System](#modular-pipeline-system)
 - [Setup Instructions](#setup-instructions)
 - [Environment Variables](#environment-variables)
 - [Running the Project](#running-the-project)
+- [Notebook Execution Order](#notebook-execution-order)
 - [API Endpoints & Frontend Pages](#api-endpoints--frontend-pages)
 - [Usage Examples](#usage-examples)
 - [Troubleshooting & FAQ](#troubleshooting--faq)
@@ -24,8 +27,9 @@ This project is a modular system for product recommendation, OCR-based query pro
 
 ## Project Structure
 ```
-ds_task_1ab/
+ds_test/
   app.py                # Flask app entrypoint
+  example_pipeline_usage.py  # Example script for modular pipeline
   src/
     endpoints/          # API blueprints (routes.py, image_detection.py)
     error_handlers.py   # Error handling utilities
@@ -50,11 +54,87 @@ ds_task_1ab/
 | Vector DB                  | `src/utils/vector_db_utils.py`, `src/initialization.py`     | Start backend, check logs                       | Pinecone index created               |
 | Product Recommendation     | `src/endpoints/routes.py`                                   | POST `/api/v1/recommendations`                  | JSON with products                   |
 | OCR                        | `src/utils/handwriting_ocr.py`, `src/initialization.py`    | POST `/api/v1/ocr-query`                        | JSON with OCR result                 |
-| Web Scraping               | `src/scripts/web_scraping_fix.py`, `notebooks/2_ocr_web_scraping.ipynb` | Run script or notebook              | Downloaded images                    |
-| CNN Model                  | `src/models/cnn_model.py`, `notebooks/3_cnn_model_training.ipynb` | Run notebook or backend             | Model checkpoints, predictions       |
+| Web Scraping               | `src/scripts/web_scraping_fix.py`, `notebooks/1_scrape_images.ipynb` | Run script or notebook              | Downloaded images                    |
+| CNN Model                  | `src/models/cnn_model.py`, `notebooks/2_pipeline_integration_test.ipynb` | Run notebook or backend             | Model checkpoints, predictions       |
 | Image Detection            | `src/endpoints/image_detection.py`                            | POST `/api/v1/product-detections`               | JSON with class, products            |
 | Frontend                   | `frontend/app/`                                              | `npm run dev` in `frontend/app/`                | Web UI for queries                   |
-| Tests                      | `test/`                                                     | `pytest` in `ds_task_1ab/`                      | Test results                         |
+| Tests                      | `test/`                                                     | `pytest` in project root                      | Test results                         |
+
+---
+
+## Modular Pipeline System
+
+The project now includes a modular pipeline system that makes it easy to train and experiment with different model configurations. This system consists of two main classes:
+
+### PipelineConfig
+A configuration class that encapsulates all training parameters:
+
+```python
+from src.pipeline import PipelineConfig
+
+# Basic configuration
+config = PipelineConfig(
+    batch_size=32,
+    num_epochs=10,
+    learning_rate=0.001,
+    min_samples_per_class=10,
+    num_workers=4,
+    test_size=0.2
+)
+
+# Custom configuration for small datasets
+small_config = PipelineConfig(
+    batch_size=8,
+    num_epochs=5,
+    learning_rate=0.01,
+    min_samples_per_class=2,
+    num_workers=0,  # Avoid multiprocessing issues
+    test_size=0.3
+)
+```
+
+### Pipeline
+The main pipeline class that handles the entire training workflow:
+
+```python
+from src.pipeline import Pipeline, PipelineConfig
+
+# Initialize pipeline
+config = PipelineConfig(batch_size=16, num_epochs=5)
+pipeline = Pipeline(config, project_root="./")
+
+# Load and prepare data
+data = pipeline.load_data()
+train_loader, val_loader = pipeline.prepare_data_loaders()
+
+# Create and train model
+model = pipeline.create_model()
+results = pipeline.train()
+```
+
+### Example Usage
+See `example_pipeline_usage.py` for complete examples demonstrating:
+- Different configuration scenarios
+- Error handling
+- Logging integration
+- Training workflow
+
+### Running the Example
+```bash
+python example_pipeline_usage.py
+```
+
+### Testing the Pipeline
+```bash
+pytest test/test_pipeline.py -v
+```
+
+The modular pipeline system provides:
+- **Flexibility**: Easy to experiment with different configurations
+- **Reproducibility**: Consistent training workflows
+- **Logging**: Comprehensive logging for debugging and monitoring
+- **Testing**: Full test coverage for all pipeline components
+- **Error Handling**: Robust error handling and validation
 
 ---
 
@@ -67,7 +147,7 @@ ds_task_1ab/
 ### 1. Clone the Repository
 ```bash
 git clone <repo-url>
-cd ds_task_1ab
+cd ds_test
 ```
 
 ### 2. Backend Setup
@@ -86,7 +166,7 @@ npm install
 ---
 
 ## Environment Variables
-Create a `.env` file in `ds_task_1ab/` with the following (example values):
+Create a `.env` file in the project root with the following (example values):
 ```
 PINECONE_API_KEY=your_pinecone_key
 OPENAI_API_KEY=your_openai_key
@@ -96,7 +176,7 @@ OPENAI_API_KEY=your_openai_key
 - `OPENAI_API_KEY`: For language model features (if used)
 
 
-Create a `.env.local` file in `frontend` with the following:
+Create a `.env.local` file in `frontend/app` with the following:
 ```
 NEXT_PUBLIC_BACKEND_URL=your_backend_url
 ```
@@ -108,7 +188,6 @@ NEXT_PUBLIC_BACKEND_URL=your_backend_url
 ## Running the Project
 ### Start Backend (Flask)
 ```bash
-cd ds_task_1ab
 python app.py
 ```
 - The backend will be available at `http://localhost:5000/`
@@ -120,18 +199,40 @@ npm run dev
 ```
 - The frontend will be available at `http://localhost:3000/`
 
-### Run Notebooks
-```bash
-cd ds_task_1ab/notebooks
-jupyter notebook
-```
-- Open the desired notebook and run cells as needed.
-
 ### Run Tests
 ```bash
-cd ds_task_1ab
 pytest
 ```
+
+---
+
+## Notebook Execution Order
+The notebooks should be executed in the following order for proper data flow:
+
+1. **`1_scrape_images.ipynb`** - Web scraping for product images
+   - Downloads images from Amazon based on product descriptions
+   - Creates the image dataset for training
+
+2. **`2_pipeline_integration_test.ipynb`** - Pipeline integration and model training
+   - Tests the complete data pipeline
+   - Trains the CNN model
+   - Validates model performance
+
+3. **`3_model_performance_metrics.ipynb`** - Model evaluation and metrics
+   - Evaluates trained model performance
+   - Generates accuracy, F1 score, confusion matrix
+   - Creates performance visualizations
+
+4. **`4_ocr_utility.ipynb`** - OCR functionality testing
+   - Tests handwriting OCR capabilities
+   - Validates OCR accuracy on test images
+
+5. **`5_similarity_analysis.ipynb`** - Similarity analysis and recommendations
+   - Analyzes product similarities
+   - Tests recommendation algorithms
+   - Validates vector search functionality
+
+**Note**: Each notebook builds upon the previous ones, so execute them in order for best results.
 
 ---
 
@@ -177,4 +278,6 @@ curl -X POST http://localhost:5000/api/v1/product-detections \
 - **Frontend/Backend not connecting:** Make sure both are running and CORS is enabled in Flask.
 - **Pinecone/OpenAI errors:** Check your API keys and network connection.
 - **Tests failing:** Run `pytest -v` for more detailed output.
+- **Image loading errors:** Ensure the static/images directories exist and contain the scraped images.
+- **Notebook path errors:** Make sure to run notebooks from the project root directory.
 

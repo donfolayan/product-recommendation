@@ -22,7 +22,7 @@ from src.models.cnn_model import CNNModel
 
 class ProductDataset(Dataset):
     """Dataset for product images"""
-    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None) -> None:
+    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None, project_root: Optional[Path] = None) -> None:
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform or transforms.Compose([
@@ -30,13 +30,22 @@ class ProductDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
+        self.project_root = project_root
         
     def __len__(self) -> int:
         return len(self.image_paths)
         
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         try:
-            image = Image.open(self.image_paths[idx]).convert('RGB')
+            # Handle both absolute and relative paths
+            img_path = self.image_paths[idx]
+            if self.project_root and not Path(img_path).is_absolute():
+                # Convert Windows backslashes to forward slashes and resolve relative to project root
+                img_path = str(self.project_root / img_path.replace('\\', '/'))
+            else:
+                img_path = str(Path(img_path))
+            
+            image = Image.open(img_path).convert('RGB')
             if self.transform:
                 image = self.transform(image)
             label = self.labels[idx]
@@ -159,8 +168,10 @@ def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, lear
             label = stock_code_to_label[stock_code]
             
             for img_path in stock_code_dir.glob('*.jpg'):
+                # Store relative path to match CSV format
+                relative_path = str(img_path.relative_to(project_root)).replace('/', '\\')
                 existing_images.append({
-                    'image_path': str(img_path),
+                    'image_path': relative_path,
                     'label': label
                 })
         
@@ -185,8 +196,8 @@ def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, lear
         train_df['label'] = train_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         val_df['label'] = val_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         
-        train_dataset = ProductDataset(train_df['image_path'].values, train_df['label'].values)
-        val_dataset = ProductDataset(val_df['image_path'].values, val_df['label'].values, transform=None)
+        train_dataset = ProductDataset(train_df['image_path'].values, train_df['label'].values, project_root=project_root)
+        val_dataset = ProductDataset(val_df['image_path'].values, val_df['label'].values, transform=None, project_root=project_root)
         
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
