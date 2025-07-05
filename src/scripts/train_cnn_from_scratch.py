@@ -13,8 +13,8 @@ from PIL import Image
 from tqdm import tqdm
 import json
 import traceback
+from typing import List, Union, Optional, Any, Tuple, Dict
 
-# Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
@@ -22,7 +22,7 @@ from src.models.cnn_model import CNNModel
 
 class ProductDataset(Dataset):
     """Dataset for product images"""
-    def __init__(self, image_paths, labels, transform=None):
+    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None) -> None:
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform or transforms.Compose([
@@ -31,10 +31,10 @@ class ProductDataset(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.image_paths)
         
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
         try:
             image = Image.open(self.image_paths[idx]).convert('RGB')
             if self.transform:
@@ -46,18 +46,26 @@ class ProductDataset(Dataset):
             return image, label
         except Exception as e:
             print(f"Error loading image {self.image_paths[idx]}: {str(e)}")
-            # Return a blank image if there's an error
             return torch.zeros(3, 224, 224), torch.tensor(0)
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger):
+def train_model(
+    model: nn.Module, 
+    train_loader: DataLoader, 
+    val_loader: DataLoader, 
+    criterion: nn.Module, 
+    optimizer: optim.Optimizer, 
+    num_epochs: int, 
+    device: torch.device, 
+    model_dir: Path, 
+    logger: Any
+) -> Tuple[float, Optional[int]]:
     """Train the model"""
     try:
         model_dir.mkdir(parents=True, exist_ok=True)
         best_val_acc = 0.0
         best_epoch = None
         start_epoch = 0
-        # Try to load the last checkpoint (optional, can be removed if not resuming)
-        # Training loop
+        
         for epoch in range(start_epoch, num_epochs):
             logger.info(f'Epoch {epoch+1}/{num_epochs}:')
             model.train()
@@ -121,31 +129,24 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, num_epoch
         logger.error(traceback.format_exc())
         raise
 
-def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
+def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, learning_rate: float = 0.001) -> Dict[str, Any]:
     """Main function to train the CNN model"""
     try:
-        # Convert project root to Path object
         project_root = Path(project_root_str)
-        # Set up logging
         log_dir = project_root / 'logs/training'
         logger = setup_logger(__name__, log_dir)
         
-        # Load and preprocess data
         data_file = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'
         df = pd.read_csv(data_file)
         
-        # Create a mapping of stock codes to labels from the image paths
         stock_code_to_label = {}
         for _, row in df.iterrows():
-            # Extract stock code from image path (e.g., "22384" from "static/images/22384/22384_1.jpg")
             stock_code = Path(row['image_path']).parent.name
             stock_code_to_label[stock_code] = row['label']
         
-        # Find all images in the static/images directory
         images_dir = project_root / 'static' / 'images'
         existing_images = []
         
-        # Process each stock code directory
         for stock_code_dir in images_dir.iterdir():
             if not stock_code_dir.is_dir():
                 continue
@@ -157,7 +158,6 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
                 
             label = stock_code_to_label[stock_code]
             
-            # Add all images in this directory
             for img_path in stock_code_dir.glob('*.jpg'):
                 existing_images.append({
                     'image_path': str(img_path),
@@ -167,13 +167,11 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         df = pd.DataFrame(existing_images)
         logger.info(f"Loaded {len(df)} images for training")
         
-        # Check class distribution
         class_counts = df['label'].value_counts()
         logger.info("Class distribution:")
         for label, count in class_counts.items():
             logger.info(f"Class {label}: {count} images")
         
-        # Remove classes with too few samples
         min_samples = 2
         valid_classes = class_counts[class_counts >= min_samples].index
         df = df[df['label'].isin(valid_classes)]
@@ -183,44 +181,34 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         
         logger.info(f"After filtering, using {len(df)} images from {len(valid_classes)} classes")
         
-        # Split data into train and validation sets
         train_df, val_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
-        # Flatten the label column if needed
         train_df['label'] = train_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         val_df['label'] = val_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         
-        # Create datasets
         train_dataset = ProductDataset(train_df['image_path'].values, train_df['label'].values)
         val_dataset = ProductDataset(val_df['image_path'].values, val_df['label'].values, transform=None)
         
-        # Create data loaders
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
         
-        # Initialize model
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_classes = len(valid_classes)
         model = CNNModel(num_classes).to(device)
         
-        # Define loss function and optimizer
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         
-        # Create model directory
         model_dir = project_root / 'models'
         
-        # Track best validation accuracy
         best_val_acc, best_epoch = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
         
         logger.info("Training completed successfully")
         
-        # Save the stock_code_to_label mapping for evaluation
         mapping_path = model_dir / 'stockcode_to_index.json'
         with open(mapping_path, 'w') as f:
             json.dump(stock_code_to_label, f)
         logger.info(f"Saved StockCode-to-index mapping to {mapping_path}")
         
-        # Return best validation accuracy and number of epochs
         return {
             "best_val_acc": best_val_acc,
             "best_epoch": best_epoch,

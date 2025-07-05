@@ -11,26 +11,34 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from src.models.cnn_model import CNNModel
 from src.utils.logging_utils import setup_logger
-from typing import Any
+from typing import Any, List, Union, Optional, Dict
 import json
 from PIL import Image
 
 class ProductDataset(torch.utils.data.Dataset):
-    def __init__(self, image_paths, labels, transform=None):
+    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None) -> None:
         self.image_paths = image_paths
         self.labels = labels
-        self.transform = transform or nn.Sequential(
-            # You may want to use torchvision transforms here
-        )
-    def __len__(self):
+        self.transform = transform or nn.Sequential()
+    def __len__(self) -> int:
         return len(self.image_paths)
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, Union[int, str]]:
         image = Image.open(self.image_paths[idx]).convert('RGB')
         if self.transform:
             image = self.transform(image)
         return image, self.labels[idx]
 
-def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger):
+def run_training_loop(
+    model: nn.Module, 
+    train_loader: DataLoader, 
+    val_loader: DataLoader, 
+    criterion: nn.Module, 
+    optimizer: optim.Optimizer, 
+    num_epochs: int, 
+    device: torch.device, 
+    model_dir: Path, 
+    logger: logging.Logger
+) -> tuple[float, Optional[int], Dict[str, List[float]]]:
     """
     Run the training and validation loop for the model.
     Returns best_val_acc and a history dictionary.
@@ -46,7 +54,6 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
     start_epoch = 0
     history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
 
-    # Try to load the last checkpoint
     checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
     if checkpoint_files:
         latest_checkpoint = max(checkpoint_files, key=lambda x: int(x.stem.split('_')[-1]))
@@ -60,7 +67,6 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
 
     for epoch in range(start_epoch, num_epochs):
         logger.info(f'Epoch {epoch+1}/{num_epochs}:')
-        # Training phase
         model.train()
         train_loss = 0.0
         train_correct = 0
@@ -82,7 +88,6 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
                 'loss': f'{train_loss/train_total:.1f}',
                 'acc': f'{100.*train_correct/train_total:.1f}'
             })
-        # Validation phase
         model.eval()
         val_loss = 0.0
         val_correct = 0
@@ -112,7 +117,6 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
         history['val_loss'].append(val_loss)
         history['train_acc'].append(train_acc)
         history['val_acc'].append(val_acc)
-        # Save best model
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             best_epoch = epoch + 1
@@ -125,7 +129,7 @@ def train_model(
     batch_size: int = 32,
     num_epochs: int = 50,
     learning_rate: float = 0.001
-) -> Any:
+) -> Dict[str, Any]:
     """
     Train a CNN model using the modular pipeline logic (refactored from the script).
     Args:
@@ -134,7 +138,7 @@ def train_model(
         num_epochs (int): Number of training epochs.
         learning_rate (float): Learning rate for optimizer.
     Returns:
-        Any: Training history or result from the training process.
+        Dict[str, Any]: Training history or result from the training process.
     """
     project_root = Path(project_root)
     log_dir = project_root / 'logs/training'

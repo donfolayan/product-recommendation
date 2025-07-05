@@ -2,7 +2,7 @@ import os
 from src.utils.logging_utils import setup_logger
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
 from src.utils.handwriting_ocr import HandwritingOCR
 from src.utils.vector_db_utils import VectorDBManager
 from src.services.recommendation_service import RecommendationService
@@ -57,14 +57,24 @@ async def initialize_services(executor: Optional[ThreadPoolExecutor] = None) -> 
         logger.error(f"Error initializing services: {str(e)}", exc_info=True)
         raise
 
-# Model and label mapping initialization
-model_path = 'models/best_model.pth'
-label_mapping_path = 'src/data/label_mapping.json'
-model, label_mapping = load_model(model_path, label_mapping_path)
+def initialize_model_and_transform() -> Tuple[CNNModel, Dict[str, str], transforms.Compose]:
+    """Initialize the CNN model, label mapping, and image transform."""
+    try:
+        model_path = 'models/best_model.pth'
+        label_mapping_path = 'src/data/label_mapping.json'
+        model, label_mapping = load_model(model_path, label_mapping_path)
+        
+        transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        
+        logger.info("Model and transform initialized successfully")
+        return model, label_mapping, transform
+    except Exception as e:
+        logger.error(f"Failed to initialize model and transform: {str(e)}")
+        raise
 
-# Image preprocessing transform
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-]) 
+# Initialize model and transform
+model, label_mapping, transform = initialize_model_and_transform() 

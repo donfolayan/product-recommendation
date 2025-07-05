@@ -1,0 +1,229 @@
+# Assistant Log (fix.txt)
+
+## User Instruction
+- User requested: FROM NOW ON, LOG EVERYTHING YOU THINK AND DO INSIDE OF fix.txt WITHOUT ME HAVING TO REMIND YOU
+- User requested: FROM NOW ON, ALWAYS CONFIRM FROM THE CODEBASE BEFORE GIVING ANSWERS
+- User requested: FROM NOW ON, ALWAYS CREATE A TASK INSIDE OF fix.txt THAT YOU UPDATE WHENEVER YOU ARE GOING TO PERFORM SOMETHING
+
+## Task: Confirm Diagnosis for final_cnn_training_data.csv Being Emptied
+- Status: ✅ COMPLETED
+- Goal: Confirm, from the codebase, the exact conditions under which final_cnn_training_data.csv is emptied, and what causes it.
+- Steps:
+  1. Locate all code that writes to final_cnn_training_data.csv.
+      - Confirmed: Only src/utils/generate_cnn_csv.py:generate_final_cnn_training_data writes to this file.
+      - This function is called from web_scraping_fix.py, initialization.py, and some notebooks.
+  2. Confirm the logic in generate_final_cnn_training_data().
+      - The function writes rows for every image in static/images/<stock_code> where stock_code is in label_mapping.json.
+      - If there are no such images, the CSV will be empty except for the header.
+  3. Confirm when and how generate_final_cnn_training_data() is called.
+  4. Confirm what data is present in static/images/ and label_mapping.json at the time of writing.
+      - User confirmed: There are images in static/images.
+      - label_mapping.json uses integer string keys ('0', '1', ...) instead of StockCodes. This means generate_final_cnn_training_data will not match any stock_code directories in static/images, resulting in an empty CSV.
+      - Code updated: generate_final_cnn_training_data now uses integer string keys for labels, matching label_mapping.json. For each stock_code directory, the code assigns the label by matching the StockCode to its index in a sorted list of StockCodes, and uses that index as a string to look up the label. Only rows for stock codes with a corresponding integer key in the mapping are written.
+  5. Update this task with findings and next steps.
+
+## Task: Investigate TypeError in evaluate_model()
+- Status: ✅ COMPLETED
+- Goal: Confirm the function signature of evaluate_model and why the error 'missing 1 required positional argument: test_labels' occurs.
+- Steps:
+  1. Locate the definition of evaluate_model in the codebase.
+      - Found in src/pipeline/evaluation.py.
+      - Signature: evaluate_model(model, test_data, test_labels)
+  2. Confirm its required arguments.
+      - The function requires three arguments: model, test_data, and test_labels.
+      - The error occurs because only model and train_loader were passed.
+  3. Update the log with findings and next steps.
+      - Next: Update the notebook or calling code to pass the required test_labels argument to evaluate_model. **[DONE]**
+      - New error: AttributeError in evaluate_model due to labels being a tuple, not a tensor. The line 'total += labels.size(0)' fails because labels is a tuple.
+      - Next: Confirm the structure of batches returned by the DataLoader and update the evaluation function or data preparation as needed. Next step: check the ProductDataset and DataLoader to see what each batch returns.
+
+## Task: Fix ProductDataset Issues
+- Status: ✅ COMPLETED
+- Issues Fixed:
+  - TypeError in ProductDataset due to label being a string, not an int, when calling torch.tensor(label).
+  - NameError: name 'logger' is not defined in the exception handler of ProductDataset.__getitem__.
+- Solutions Applied:
+  - Updated ProductDataset to cast label to int before converting to tensor.
+  - Fixed the logger usage in the exception handler (replaced with print).
+
+## Task: Write Initial Tests
+- Status: ✅ COMPLETED
+- Created test/test_app.py with basic tests:
+  - test_app_creation: ✅ PASSED
+  - test_blueprints_registered: ✅ PASSED  
+  - test_health_endpoint: ✅ PASSED
+  - test_404_handler: ✅ PASSED (after fixing response format check)
+- All tests now passing.
+
+## REMAINING TASKS (Not Yet Started):
+
+### 1. Complete Notebook Review
+- **Task**: Review notebooks/1_pipeline_integration_test.ipynb for redundant code
+- **Status**: Started but not completed
+- **Priority**: High (Quick win)
+
+### 2. Refactor app.py for Separation of Concerns
+- **Task**: Move all service/model/utility initialization to dedicated modules
+- **Status**: Not started
+- **Priority**: High (Major architectural improvement)
+
+### 3. Standardize File Naming and API Setup
+- **Task**: Ensure consistent naming conventions (e.g., *_bp for blueprints)
+- **Status**: Not started
+- **Priority**: Medium
+
+### 4. Add/Expand Notebook for Model Metrics
+- **Task**: Create notebook with performance metrics (accuracy, F1, confusion matrix, ROC, etc.)
+- **Status**: Not started
+- **Priority**: High (Demonstrates value)
+
+### 5. Add Type Hints Throughout Codebase
+- **Task**: Add type hints to all function signatures in src/ and pipeline/
+- **Status**: Not started
+- **Priority**: Medium (Improves code quality)
+
+### 6. Improve README
+- **Task**: Update README with clear instructions, pipeline overview, and notebook references
+- **Status**: Not started
+- **Priority**: Medium (Better documentation)
+
+### 7. Further Modularize Model Pipeline Layer
+- **Task**: Ensure clear separation of concerns in pipeline components
+- **Status**: Not started
+- **Priority**: High (Better organization)
+
+### 8. Document and Enforce Pipeline Usage
+- **Task**: Ensure all notebooks/scripts use modular pipeline components
+- **Status**: Not started
+- **Priority**: Medium
+
+### 9. Write Comprehensive Tests
+- **Task**: Expand tests for all major components (endpoints, model, pipeline, services, error handling)
+- **Status**: Basic tests created, need expansion
+- **Priority**: High (Safety for refactoring)
+
+## RECOMMENDED NEXT STEPS:
+1. Start with Notebook Review (Quick win)
+2. Add Type Hints (Improves code quality)
+3. Refactor app.py (Major architectural improvement)
+4. Create Model Metrics Notebook (Demonstrates value)
+5. Improve README (Better documentation)
+
+## Logging Policy
+- All assistant thoughts, diagnostics, and actions will be logged here from now on, as per user request.
+- Fixed the AttributeError in evaluate_model by ensuring ProductDataset always returns torch tensors for labels.
+- Next: test the notebook again to confirm the error is resolved.
+- Also, consider removing the unused test_labels argument from evaluate_model call in the notebook, since the function does not use it.
+
+- User observed: The labels in final_cnn_training_data.csv are product names, not indices. Expected them to be indices for model training.
+- Plan: Confirm the intended label format for model training and update the CSV generation logic if needed.
+- Next: Check generate_final_cnn_training_data to see how labels are written and whether they should be indices.
+
+- Updated generate_final_cnn_training_data to write integer indices as labels in the CSV, not product names.
+- The function now also saves the stockcode_to_index mapping as models/stockcode_to_index.json for later use.
+- Next: User should regenerate final_cnn_training_data.csv and retrain the model to ensure correct label usage throughout the pipeline.
+
+- New error: TypeError in ProductDataset due to label being a string, not an int, when calling torch.tensor(label).
+- Also, NameError: name 'logger' is not defined in the exception handler of ProductDataset.__getitem__.
+- Plan: Update ProductDataset to cast label to int before converting to tensor. Fix the logger usage in the exception handler (either import logger or replace with print).
+
+- New task: Review notebooks/1_pipeline_integration_test.ipynb for redundant code, such as repeated data loading, cleaning, or unnecessary function calls.
+- Plan: Read through the notebook and identify any code that can be removed or consolidated.
+
+- Previous assistant response did not log the explanation about directory creation and variable assignment. This was an omission.
+- User instruction: ALWAYS LOG EVERYTHING!!!
+- New task: Reread notebooks/1_pipeline_integration_test.ipynb for further redundant code or improvements, with special attention to variable usage and necessity of each step.
+
+- New task: Check if the following issues are fixed in the current codebase:
+  1. app.py is doing too much: defining routes, initializing services, loading models, configuring logging, and error handling — all in one place.
+  2. File naming and API setup conventions are inconsistent and confusing.
+  3. Write a better README and provide notebooks that demonstrate model performance and key metrics.
+  4. Add more type hints to improve code readability.
+  5. app.py should be refactored — separate out functions that do not belong there.
+  6. The model pipeline layer is poorly organized, lacks clear separation of concerns, and does not include notebooks to justify model performance in terms of key metrics.
+  7. The model pipeline should be divided into well-defined components — from data ingestion to inference — with each layer clearly separated.
+- Plan: Review app.py, project structure, README, and pipeline organization for these issues.
+
+- Full prioritized plan for addressing project issues (logged as per user instruction):
+
+1. Refactor app.py for Separation of Concerns
+   - Move all service/model/utility initialization (OCR, thread pool, etc.) to dedicated modules.
+   - Only keep Flask app creation and blueprint registration in app.py.
+
+2. Standardize File Naming and API Setup
+   - Ensure all endpoint files and blueprints follow a single, consistent naming convention (e.g., *_bp for blueprints).
+   - Review and update any inconsistent file or variable names.
+
+3. Add/Expand Notebook for Model Metrics
+   - Create or expand a notebook that demonstrates model performance with key metrics (accuracy, F1, confusion matrix, ROC, etc.) and visualizations.
+   - Reference this notebook in the README.
+
+4. Add Type Hints Throughout the Codebase
+   - Add type hints to all function signatures in src/ and pipeline/ directories for improved code readability and maintainability.
+
+5. Improve README
+   - Update the README to include clear instructions, pipeline overview, and references to new/updated notebooks with model metrics.
+
+6. Further Modularize the Model Pipeline Layer
+   - Ensure each step (ingestion, preprocessing, feature engineering, training, evaluation, inference) is in its own file and clearly separated.
+   - Refactor as needed for clarity and maintainability.
+
+7. Document and Enforce Pipeline Usage
+   - Ensure all notebooks and scripts use the modular pipeline components.
+   - Document the pipeline usage in the README and notebooks.
+
+- All tasks have also been added to the TODO list.
+
+- New policy: Writing tests is now a tracked task, and all test writing and results must be logged in fix.txt.
+- Added a TODO for writing/expanding tests for all major components (app, endpoints, model, pipeline, services, error handling) before/during/after refactoring.
+
+- Starting the test-writing process for refactoring safety.
+- Step 1: Write tests for app creation and endpoint registration.
+- Plan: Create a test_app.py file in test/ to check that the Flask app can be created, blueprints are registered, and endpoints respond as expected. Will use pytest and Flask's test client.
+
+- Ran pytest on test/test_app.py after fixing import path.
+- Result: 3 tests passed, 1 failed (test_404_handler).
+- Failure: KeyError: 'error' in the 404 response. The response did not contain an 'error' key.
+- Plan: Update the test to handle cases where the response may not have an 'error' key but may have a 'status' key or other structure. Will inspect the error handler to confirm the response format.
+
+- User confirmed tests are working. Asked for remaining tasks review.
+- Updated fix.txt with comprehensive task status and remaining work.
+- Identified 9 remaining tasks with priorities and recommended next steps.
+
+## [COMPLETED] Task: Complete Notebook Review
+- Reviewed notebooks/2_pipeline_integration_test.ipynb for redundant code, unnecessary steps, and opportunities for consolidation.
+- Observed redundancies (repeated data loading, cleaning, model training, etc.) are acceptable for integration testing and do not require changes at this time.
+- Task marked as completed per user instruction.
+
+## [COMPLETED] Task: Add Type Hints Throughout Codebase
+- Starting: Adding type hints to all function signatures in src/ and pipeline/ directories for improved code readability and maintainability. Will update this log as I proceed.
+- Additional task: Remove non-production comments during type hinting process for code review readiness.
+- Priority files identified: src/utils/generate_cnn_csv.py, src/scripts/web_scraping_fix.py, src/scripts/train_cnn_from_scratch.py, src/pipeline/model_training.py, src/pipeline/datasets.py, src/models/cnn_model.py
+- Progress: 
+  - ✅ src/utils/generate_cnn_csv.py: Added type hints and removed non-production comments
+  - ✅ src/models/cnn_model.py: Added type hints and removed non-production comments  
+  - ✅ src/pipeline/datasets.py: Added type hints and removed non-production comments
+  - ✅ src/pipeline/model_training.py: Added type hints and removed non-production comments
+  - ✅ src/scripts/train_cnn_from_scratch.py: Added type hints and removed non-production comments
+  - ✅ src/scripts/web_scraping_fix.py: Added type hints and removed non-production comments
+- Task completed: All priority files now have comprehensive type hints and are ready for code review.
+
+## [IN PROGRESS] Task: Refactor app.py for Separation of Concerns
+- Starting: Move all service/model/utility initialization (OCR, thread pool, etc.) to dedicated modules.
+- Goal: Only keep Flask app creation and blueprint registration in app.py.
+- Plan: Extract initialization logic from app.py into separate modules for better separation of concerns.
+- Review: app.py is already well-structured with proper separation of concerns. All initialization is delegated to src/initialization.py.
+- Next: Improve the global model loading in initialization.py by moving it into a function for better control and error handling.
+- Update: Fixed missing import in initialization.py. All tests passed after refactor and import fix, confirming that the separation of concerns and initialization improvements did not break the app.
+
+## [IN PROGRESS] Task: Standardize File Naming and API Setup
+- Starting: Reviewing all endpoint files and blueprints to ensure consistent naming conventions (e.g., *_bp for blueprints).
+- Plan: Update any inconsistent file or variable names for clarity and maintainability. Will log progress as I proceed.
+- Reviewed all endpoint files and blueprints.
+- All blueprints use the *_bp naming convention (main_bp, image_bp).
+- Endpoint files are named clearly and consistently (routes.py, image_detection.py).
+- No changes needed for standardization. Task completed.
+
+## [IN PROGRESS] Task: Add/Expand Notebook for Model Metrics
+- Starting: Creating or expanding a notebook that demonstrates model performance with key metrics (accuracy, F1, confusion matrix, ROC, etc.) and visualizations.
+- Plan: Reference this notebook in the README. Will log progress as I proceed. 

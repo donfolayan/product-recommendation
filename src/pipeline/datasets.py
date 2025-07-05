@@ -2,10 +2,11 @@ from torch.utils.data import Dataset
 from PIL import Image
 import torch
 from torchvision import transforms
+from typing import List, Union, Optional, Any
 
 class ProductDataset(Dataset):
     """Dataset for product images"""
-    def __init__(self, image_paths, labels, transform=None):
+    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None) -> None:
         self.image_paths = image_paths
         self.labels = labels
         self.transform = transform or transforms.Compose([
@@ -14,10 +15,10 @@ class ProductDataset(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
     
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.image_paths)
     
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         try:
             image = Image.open(self.image_paths[idx]).convert('RGB')
             if self.transform:
@@ -28,5 +29,4 @@ class ProductDataset(Dataset):
             return image, label
         except Exception as e:
             print(f"Error loading image {self.image_paths[idx]}: {str(e)}")
-            # Return a blank image if there's an error
             return torch.zeros(3, 224, 224), torch.tensor(0) 
