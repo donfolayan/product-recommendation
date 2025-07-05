@@ -11,6 +11,7 @@ from src.models.cnn_model import CNNModel
 from torchvision import transforms  # type: ignore
 from pathlib import Path
 from dotenv import load_dotenv
+from src.utils.generate_cnn_csv import generate_final_cnn_training_data
 
 # Set up logging using the project utility
 logger = setup_logger(__name__, Path('logs/app'))
@@ -18,6 +19,10 @@ logger = setup_logger(__name__, Path('logs/app'))
 def load_environment():
     """Load environment variables from .env file using utility."""
     load_dotenv()
+    # Ensure the CNN training CSV exists
+    csv_path = Path(__file__).parent / 'data' / 'final_cnn_training_data.csv'
+    if not csv_path.exists():
+        generate_final_cnn_training_data()
 
 def create_thread_pool(max_workers: int = 4) -> ThreadPoolExecutor:
     """Create a thread pool executor for async operations."""
@@ -53,14 +58,9 @@ async def initialize_services(executor: Optional[ThreadPoolExecutor] = None) -> 
         raise
 
 # Model and label mapping initialization
-model: Optional[CNNModel] = None
-label_mapping: Optional[dict[str, str]] = None
-
-try:
-    model, label_mapping = load_model()
-    logger.info("Model loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load model: {str(e)}")
+model_path = 'models/best_model.pth'
+label_mapping_path = 'src/data/label_mapping.json'
+model, label_mapping = load_model(model_path, label_mapping_path)
 
 # Image preprocessing transform
 transform = transforms.Compose([

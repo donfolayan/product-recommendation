@@ -5,6 +5,7 @@ import pytest
 from unittest.mock import patch, mock_open, MagicMock
 from src.utils import model_loader
 import torch
+from src.utils.model_loader import load_model
 
 @patch('src.utils.model_loader.torch.max', return_value=(torch.tensor([0.9]), torch.tensor([1])))
 @patch('src.utils.model_loader.torch.nn.functional.softmax', return_value=torch.randn(1, 2))
@@ -20,7 +21,9 @@ def test_load_model_success(mock_cnn, mock_open_fn, mock_torch_load, mock_softma
     mock_model.load_state_dict = MagicMock()
     with patch('src.utils.model_loader.torch.randn', return_value=torch.randn(1, 3, 224, 224)):
         with patch('src.utils.model_loader.torch.no_grad'):
-            model, label_mapping = model_loader.load_model()
+            model_path = 'models/best_model.pth'
+            label_mapping_path = 'src/data/label_mapping.json'
+            model, label_mapping = load_model(model_path, label_mapping_path)
     assert model is not None
     assert label_mapping == {"0": "cat", "1": "dog"}
 
@@ -30,4 +33,6 @@ def test_load_model_success(mock_cnn, mock_open_fn, mock_torch_load, mock_softma
 def test_load_model_error(mock_cnn, mock_open_fn, mock_torch_load):
     mock_cnn.return_value = MagicMock()
     with pytest.raises(Exception):
-        model_loader.load_model() 
+        model_path = 'models/best_model.pth'
+        label_mapping_path = 'src/data/label_mapping.json'
+        model_loader.load_model(model_path, label_mapping_path) 

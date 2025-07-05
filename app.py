@@ -13,6 +13,7 @@ from src.error_handlers import not_found, internal_error
 from src.endpoints.routes import main_bp
 from src.endpoints.image_detection import image_bp
 
+
 def create_app() -> Flask:
     # Set up logging using the project utility
     logger = init_app_logger()

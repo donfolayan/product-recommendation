@@ -3,15 +3,23 @@ import json
 import logging
 from pathlib import Path
 from src.models.cnn_model import CNNModel
+import os
 
 logger = logging.getLogger(__name__)
 
-def load_model() -> tuple[CNNModel, dict[str, str]]:
+def load_model(model_path, label_mapping_path, device=None) -> tuple[CNNModel, dict[str, str]]:
+    project_root = Path(__file__).parent.parent.parent
+    model_path = project_root / 'models' / 'best_model.pth'
+    label_mapping_path = project_root / 'src' / 'data' / 'label_mapping.json'
+    # Debug prints for troubleshooting file path issues
+    print("[DEBUG] Current working directory:", os.getcwd())
+    print("[DEBUG] Model path (as passed):", model_path)
+    print("[DEBUG] Model path (absolute):", os.path.abspath(model_path))
+    # Gracefully handle missing model file: log and return None, None
+    if not os.path.exists(model_path):
+        logger.error(f"Model file not found: {model_path}. Please train the model first.")
+        return None, None
     try:
-        project_root = Path(__file__).parent.parent.parent
-        model_path = project_root / 'models' / 'best_model.pth'
-        label_mapping_path = project_root / 'src' / 'data' / 'label_mapping.json'
-        
         logger.info(f"Loading model from: {model_path}")
         logger.info(f"Loading label mapping from: {label_mapping_path}")
         
@@ -44,7 +52,10 @@ def load_model() -> tuple[CNNModel, dict[str, str]]:
             logger.info(f"Probabilities: {probabilities[0].tolist()}")
             
             confidence, predicted = torch.max(probabilities, 1)
-            logger.info(f"Test prediction: Class {predicted.item()} ({label_mapping[str(predicted.item())]}) with confidence {confidence.item():.4f}")
+            stock_codes = sorted(label_mapping.keys())  # Ensure this matches training order
+            stock_code = stock_codes[predicted.item()]
+            label = label_mapping[stock_code]
+            logger.info(f"Test prediction: Class {predicted.item()} (StockCode: {stock_code}, Label: {label}) with confidence {confidence.item():.4f}")
         
         return model, label_mapping
     except Exception as e:

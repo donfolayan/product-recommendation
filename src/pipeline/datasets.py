@@ -22,8 +22,11 @@ class ProductDataset(Dataset):
             image = Image.open(self.image_paths[idx]).convert('RGB')
             if self.transform:
                 image = self.transform(image)
-            return image, self.labels[idx]
+            label = self.labels[idx]
+            if not torch.is_tensor(label):
+                label = torch.tensor(int(label))
+            return image, label
         except Exception as e:
             print(f"Error loading image {self.image_paths[idx]}: {str(e)}")
             # Return a blank image if there's an error
-            return torch.zeros(3, 224, 224), self.labels[idx] 
+            return torch.zeros(3, 224, 224), torch.tensor(0) 

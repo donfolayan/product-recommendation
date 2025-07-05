@@ -22,6 +22,7 @@ from pathlib import Path
 log_dir = Path(__file__).resolve().parent.parent.parent / 'logs/scraper'
 log_dir.mkdir(parents=True, exist_ok=True)
 logger = setup_logger(__name__, log_dir)
+project_root = os.path.abspath(os.path.join(os.getcwd(), '..'))
 
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
@@ -29,6 +30,13 @@ USER_AGENTS = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 Edg/91.0.864.59',
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+]
+ACCEPT_LANGUAGES = [
+    'en-US,en;q=0.9',
+    'en-GB,en;q=0.8',
+    'en;q=0.7',
+    'en-US;q=0.6',
+    'en-CA,en;q=0.5'
 ]
 
 class ImageSimilarityChecker:
@@ -54,45 +62,34 @@ class AmazonScraper:
     def __init__(self):
         self.base_url = "https://www.amazon.com"
         self.search_url = f"{self.base_url}/s"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-        }
         self.session = requests.Session()
-        self.session.headers.update(self.headers)
         self.rate_limit = {
             'last_request': datetime.now(),
-            'min_delay': 2.0,  # Minimum delay between requests
-            'max_delay': 5.0,  # Maximum delay between requests
+            'min_delay': 5.0,  # Reduced minimum delay between requests
+            'max_delay': 15.0,  # Reduced maximum delay between requests
             'backoff_factor': 1.5,  # Multiplier for backoff
-            'current_delay': 2.0,  # Current delay between requests
+            'current_delay': 5.0,  # Current delay between requests
             'consecutive_failures': 0  # Track consecutive failures
         }
         self.max_workers = 5  # Number of concurrent downloads
         self.similarity_checker = ImageSimilarityChecker()
 
     def _respect_rate_limit(self):
-        """Implement rate limiting with exponential backoff"""
+        """Implement rate limiting with random delay between min and max delay"""
         now = datetime.now()
         time_since_last = (now - self.rate_limit['last_request']).total_seconds()
-        
         if time_since_last < self.rate_limit['current_delay']:
             sleep_time = self.rate_limit['current_delay'] - time_since_last
             time.sleep(sleep_time)
-        
         self.rate_limit['last_request'] = datetime.now()
+        # After each request, randomize the next delay
+        self.rate_limit['current_delay'] = random.uniform(self.rate_limit['min_delay'], self.rate_limit['max_delay'])
 
     def _handle_rate_limit(self, success):
         """Update rate limiting parameters based on request success"""
         if success:
-            # Gradually decrease delay on success
-            self.rate_limit['current_delay'] = max(
-                self.rate_limit['min_delay'],
-                self.rate_limit['current_delay'] / self.rate_limit['backoff_factor']
-            )
+            # Gradually decrease delay on success, but randomize for next request
+            self.rate_limit['current_delay'] = random.uniform(self.rate_limit['min_delay'], self.rate_limit['max_delay'])
             self.rate_limit['consecutive_failures'] = 0
         else:
             # Increase delay on failure
@@ -114,7 +111,15 @@ class AmazonScraper:
         while retry_count < max_retries:
             try:
                 self._respect_rate_limit()
-                response = self.session.get(url, timeout=10)
+                # Randomize headers for each request
+                headers = {
+                    'User-Agent': random.choice(USER_AGENTS),
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': random.choice(ACCEPT_LANGUAGES),
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1',
+                }
+                response = self.session.get(url, headers=headers, timeout=60)
                 
                 # Check for bot detection
                 if "Enter the characters you see below" in response.text or "Type the characters you see in this image" in response.text:
@@ -290,7 +295,7 @@ class AmazonScraper:
         logger.info(f"[START] search_and_download_images for stock_code={stock_code}, description='{description}'")
         try:
             # Create directories first
-            base_dir = "C:/Users/don/dev/ds-test/ds_task_1ab/static/images"
+            base_dir = os.path.join(project_root, "static", "images")
             image_dir = os.path.join(base_dir, str(stock_code))
             try:
                 if not os.path.exists(base_dir):
@@ -433,34 +438,16 @@ def scrape_images_from_file(input_file):
         # Create scraper instance
         scraper = AmazonScraper()
         
-        # TEMPORARY: Skip products until after SPOTTY BUNTING
-        # TODO: Remove this temporary skip mechanism after testing
-        start_processing = False
-        
-        # Process each product
+        # Process each product (no skip logic)
         for index, row in df.iterrows():
             stock_code = str(row['StockCode'])
             description = row['Description']
-            
-            # TEMPORARY: Skip until we find the last SPOTTY BUNTING variation
-            if description in ["SPOTTY BUNTING", "BUNTING , SPOTTY"]:
-                start_processing = True
-                continue
-                
-            # TEMPORARY: Skip if we haven't found SPOTTY BUNTING yet
-            if not start_processing:
-                logger.info(f"Skipping {description} (stock code: {stock_code})")
-                continue
-                
             logger.info(f"Processing stock code: {stock_code}")
             success = scraper.search_and_download_images(description, stock_code)
-            
             if not success:
                 logger.error(f"Failed to process {description} (stock code: {stock_code})")
-            
             # Add a delay between products
             time.sleep(random.uniform(2, 5))
-            
     except Exception as e:
         logger.error(f"Error in scrape_images_from_file: {str(e)}")
         logger.error(traceback.format_exc())

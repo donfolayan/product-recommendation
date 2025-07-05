@@ -39,151 +39,83 @@ class ProductDataset(Dataset):
             image = Image.open(self.image_paths[idx]).convert('RGB')
             if self.transform:
                 image = self.transform(image)
-            return image, self.labels[idx]
+            label = self.labels[idx]
+            if isinstance(label, tuple):
+                label = label[0]
+            label = torch.tensor(label) if not torch.is_tensor(label) else label
+            return image, label
         except Exception as e:
             print(f"Error loading image {self.image_paths[idx]}: {str(e)}")
             # Return a blank image if there's an error
-            return torch.zeros(3, 224, 224), self.labels[idx]
+            return torch.zeros(3, 224, 224), torch.tensor(0)
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger):
     """Train the model"""
     try:
-        # Create model directory if it doesn't exist
         model_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Initialize best validation accuracy
         best_val_acc = 0.0
+        best_epoch = None
         start_epoch = 0
-        
-        # Try to load the last checkpoint
-        checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
-        if checkpoint_files:
-            # Get the latest checkpoint
-            latest_checkpoint = max(checkpoint_files, key=lambda x: int(x.stem.split('_')[-1]))
-            checkpoint = torch.load(latest_checkpoint)
-            
-            # Load model state
-            model.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            start_epoch = checkpoint['epoch'] + 1
-            best_val_acc = checkpoint['val_acc']
-            
-            logger.info(f"Resuming training from epoch {start_epoch}")
-            logger.info(f"Previous best validation accuracy: {best_val_acc:.2f}%")
-        
+        # Try to load the last checkpoint (optional, can be removed if not resuming)
         # Training loop
         for epoch in range(start_epoch, num_epochs):
             logger.info(f'Epoch {epoch+1}/{num_epochs}:')
-            
-            # Training phase
             model.train()
             train_loss = 0.0
             train_correct = 0
             train_total = 0
-            
             train_pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs} [Train]')
-            for inputs, labels in train_pbar:
+            for batch in train_pbar:
+                inputs, labels = batch
+                if isinstance(inputs, tuple):
+                    inputs = inputs[0]
                 inputs, labels = inputs.to(device), labels.to(device)
-                
-                # Zero the parameter gradients
                 optimizer.zero_grad()
-                
-                # Forward pass
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
-                
-                # Backward pass and optimize
                 loss.backward()
                 optimizer.step()
-                
-                # Update statistics
                 train_loss += loss.item()
                 _, predicted = outputs.max(1)
                 train_total += labels.size(0)
                 train_correct += predicted.eq(labels).sum().item()
-                
-                # Update progress bar
                 train_pbar.set_postfix({
                     'loss': f'{train_loss/train_total:.1f}',
                     'acc': f'{100.*train_correct/train_total:.1f}'
                 })
-            
-            # Validation phase
             model.eval()
             val_loss = 0.0
             val_correct = 0
             val_total = 0
-            
             with torch.no_grad():
                 val_pbar = tqdm(val_loader, desc=f'Epoch {epoch+1}/{num_epochs} [Val]')
-                for inputs, labels in val_pbar:
+                for batch in val_pbar:
+                    inputs, labels = batch
+                    if isinstance(inputs, tuple):
+                        inputs = inputs[0]
                     inputs, labels = inputs.to(device), labels.to(device)
-                    
-                    # Forward pass
                     outputs = model(inputs)
                     loss = criterion(outputs, labels)
-                    
-                    # Update statistics
                     val_loss += loss.item()
                     _, predicted = outputs.max(1)
                     val_total += labels.size(0)
                     val_correct += predicted.eq(labels).sum().item()
-                    
-                    # Update progress bar
                     val_pbar.set_postfix({
                         'loss': f'{val_loss/val_total:.1f}',
                         'acc': f'{100.*val_correct/val_total:.1f}'
                     })
-            
-            # Calculate epoch statistics
             train_loss = train_loss / len(train_loader)
             train_acc = 100. * train_correct / train_total
             val_loss = val_loss / len(val_loader)
             val_acc = 100. * val_correct / val_total
-            
-            # Log epoch statistics
             logger.info(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
             logger.info(f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%')
-            
-            # Save best model
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
-                torch.save(model.state_dict(), model_dir / 'best_model.pth')
-                logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}%')
                 best_epoch = epoch + 1
-            
-            # Save checkpoint for this epoch
-            checkpoint_path = model_dir / f'checkpoint_epoch_{epoch+1}.pth'
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'train_loss': train_loss,
-                'val_loss': val_loss,
-                'train_acc': train_acc,
-                'val_acc': val_acc
-            }, checkpoint_path)
-
-            # Track top 2 validation accuracies and last epoch
-            if epoch == 0:
-                second_best_val_acc = val_acc
-                second_best_epoch = epoch + 1
-            elif val_acc > second_best_val_acc and (epoch + 1) != best_epoch:
-                second_best_val_acc = val_acc
-                second_best_epoch = epoch + 1
-
-            # After saving, clean up unnecessary checkpoints
-            checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
-            # Always keep best, second best, and last
-            keep_epochs = set([best_epoch, second_best_epoch, num_epochs])
-            for ckpt in checkpoint_files:
-                try:
-                    epoch_num = int(ckpt.stem.split('_')[-1])
-                    if epoch_num not in keep_epochs:
-                        ckpt.unlink()
-                except Exception as e:
-                    logger.warning(f'Could not process checkpoint {ckpt}: {e}')
-            
+                torch.save(model.state_dict(), model_dir / 'best_model.pth')
+                logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}% (epoch {best_epoch})')
+        return best_val_acc, best_epoch
     except Exception as e:
         logger.error(f"Error in train_model: {str(e)}")
         logger.error(traceback.format_exc())
@@ -253,6 +185,9 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         
         # Split data into train and validation sets
         train_df, val_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
+        # Flatten the label column if needed
+        train_df['label'] = train_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
+        val_df['label'] = val_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
         
         # Create datasets
         train_dataset = ProductDataset(train_df['image_path'].values, train_df['label'].values)
@@ -275,10 +210,7 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         model_dir = project_root / 'models'
         
         # Track best validation accuracy
-        best_val_acc = 0.0
-        
-        # Train the model
-        train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
+        best_val_acc, best_epoch = train_model(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
         
         logger.info("Training completed successfully")
         
@@ -291,6 +223,7 @@ def main(project_root_str, batch_size=32, num_epochs=50, learning_rate=0.001):
         # Return best validation accuracy and number of epochs
         return {
             "best_val_acc": best_val_acc,
+            "best_epoch": best_epoch,
             "num_epochs": num_epochs
         }
         

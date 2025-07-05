@@ -42,6 +42,7 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
 
     model_dir.mkdir(parents=True, exist_ok=True)
     best_val_acc = 0.0
+    best_epoch = None
     start_epoch = 0
     history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
 
@@ -65,7 +66,8 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
         train_correct = 0
         train_total = 0
         train_pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/{num_epochs} [Train]')
-        for inputs, labels in train_pbar:
+        for batch in train_pbar:
+            inputs, labels = batch
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -87,7 +89,8 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
         val_total = 0
         with torch.no_grad():
             val_pbar = tqdm(val_loader, desc=f'Epoch {epoch+1}/{num_epochs} [Val]')
-            for inputs, labels in val_pbar:
+            for batch in val_pbar:
+                inputs, labels = batch
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
@@ -112,42 +115,10 @@ def run_training_loop(model, train_loader, val_loader, criterion, optimizer, num
         # Save best model
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), model_dir / 'best_model.pth')
-            logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}%')
             best_epoch = epoch + 1
-        
-        # Save checkpoint for this epoch
-        checkpoint_path = model_dir / f'checkpoint_epoch_{epoch+1}.pth'
-        torch.save({
-            'epoch': epoch,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'train_loss': train_loss,
-            'val_loss': val_loss,
-            'train_acc': train_acc,
-            'val_acc': val_acc
-        }, checkpoint_path)
-
-        # Track top 2 validation accuracies and last epoch
-        if epoch == 0:
-            second_best_val_acc = val_acc
-            second_best_epoch = epoch + 1
-        elif val_acc > second_best_val_acc and (epoch + 1) != best_epoch:
-            second_best_val_acc = val_acc
-            second_best_epoch = epoch + 1
-
-        # After saving, clean up unnecessary checkpoints
-        checkpoint_files = list(model_dir.glob('checkpoint_epoch_*.pth'))
-        # Always keep best, second best, and last
-        keep_epochs = set([best_epoch, second_best_epoch, num_epochs])
-        for ckpt in checkpoint_files:
-            try:
-                epoch_num = int(ckpt.stem.split('_')[-1])
-                if epoch_num not in keep_epochs:
-                    ckpt.unlink()
-            except Exception as e:
-                logger.warning(f'Could not process checkpoint {ckpt}: {e}')
-    return best_val_acc, history
+            torch.save(model.state_dict(), model_dir / 'best_model.pth')
+            logger.info(f'New best model saved with validation accuracy: {val_acc:.2f}% (epoch {best_epoch})')
+    return best_val_acc, best_epoch, history
 
 def train_model(
     project_root: str,
@@ -212,7 +183,7 @@ def train_model(
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     model_dir = project_root / 'models'
-    best_val_acc, history = run_training_loop(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
+    best_val_acc, best_epoch, history = run_training_loop(model, train_loader, val_loader, criterion, optimizer, num_epochs, device, model_dir, logger)
     # Save the stock_code_to_label mapping for evaluation
     mapping_path = model_dir / 'stockcode_to_index.json'
     with open(mapping_path, 'w') as f:
@@ -220,6 +191,7 @@ def train_model(
     logger.info(f"Saved StockCode-to-index mapping to {mapping_path}")
     return {
         "best_val_acc": best_val_acc,
+        "best_epoch": best_epoch,
         "num_epochs": num_epochs,
         "history": history
     }
