@@ -1,4 +1,5 @@
 import time
+import asyncio
 import pandas as pd  # type: ignore
 from pinecone import Pinecone, ServerlessSpec  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
@@ -7,7 +8,6 @@ from pathlib import Path
 from src.utils.logging_utils import setup_logger
 from cachetools import TTLCache
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
 from functools import lru_cache
 from src.utils.project_utils import setup_project_path
 

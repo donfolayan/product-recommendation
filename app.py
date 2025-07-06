@@ -1,7 +1,7 @@
-from flask import Flask
-from flask_cors import CORS
 import os
 import asyncio
+from flask import Flask
+from flask_cors import CORS
 from src.utils.logging_utils import init_app_logger
 from src.initialization import (
     load_environment,

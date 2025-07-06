@@ -15,11 +15,7 @@ def generate_final_cnn_training_data(project_root: Optional[Path] = None) -> Non
         project_root = find_project_root()
     
     IMAGES_DIR = project_root / 'static' / 'images'
-    LABEL_MAP_PATH = project_root / 'src' / 'data' / 'dataset' / 'label_mapping.json'
     OUTPUT_CSV = project_root / 'src' / 'data' / 'dataset' / 'final_cnn_training_data.csv'
-
-    with open(LABEL_MAP_PATH, 'r', encoding='utf-8') as f:
-        label_map = json.load(f)
 
     stock_code_dirs = [d for d in IMAGES_DIR.iterdir() if d.is_dir()]
     stock_codes = sorted([d.name for d in stock_code_dirs])

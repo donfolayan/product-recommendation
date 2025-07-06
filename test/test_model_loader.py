@@ -1,9 +1,9 @@
 import sys
 import os
 import pytest
+import torch
 from unittest.mock import patch, MagicMock
 from src.utils import model_loader
-import torch
 from src.utils.model_loader import load_model
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.project_utils import setup_project_path

@@ -1,9 +1,9 @@
-from pinecone import Pinecone, ServerlessSpec  # type: ignore
-from sentence_transformers import SentenceTransformer  # type: ignore
-from dotenv import load_dotenv
 import os
 import time
 import pandas as pd  # type: ignore
+from pinecone import Pinecone, ServerlessSpec  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any
 

@@ -1,6 +1,6 @@
 import sys
-from pathlib import Path
 import easyocr
+from pathlib import Path
 from src.utils.logging_utils import setup_logger
 from src.utils.project_utils import setup_project_path
 

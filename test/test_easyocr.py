@@ -1,11 +1,10 @@
 import sys
-import os
+import logging
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.utils.project_utils import setup_project_path
 setup_project_path()
 from src.utils.handwriting_ocr import HandwritingOCR
-import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)

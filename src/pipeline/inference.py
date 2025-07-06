@@ -1,5 +1,6 @@
-from typing import Any
 import torch
+from typing import Any
+
 
 def predict(model: Any, input_data: Any) -> Any:
     """

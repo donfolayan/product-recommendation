@@ -1,9 +1,10 @@
+import os
 import torch
 import json
 import logging
 from pathlib import Path
 from src.models.cnn_model import CNNModel
-import os
+
 
 logger = logging.getLogger(__name__)
 

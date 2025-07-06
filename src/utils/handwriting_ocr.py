@@ -2,13 +2,13 @@ import os
 import torch
 import easyocr  # type: ignore
 import numpy as np
+import cv2
+import re
+import google.generativeai as genai  # type: ignore
 from PIL import Image  # type: ignore
 from pathlib import Path
 from typing import Union, Any, cast
-import cv2
 from src.utils.enhanced_spell_checker import EnhancedSpellChecker
-import re
-import google.generativeai as genai  # type: ignore
 from src.utils.logging_utils import setup_logger
 
 # Set up logging

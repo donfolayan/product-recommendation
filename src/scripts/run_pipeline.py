@@ -4,8 +4,8 @@ Example script demonstrating the modular pipeline usage.
 """
 
 import sys
-from pathlib import Path
 import argparse
+from pathlib import Path
 from src.utils.project_utils import setup_project_path
 
 # Add project root to path

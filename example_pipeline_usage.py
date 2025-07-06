@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Example script demonstrating the modular pipeline usage.
 

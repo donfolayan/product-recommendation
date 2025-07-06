@@ -1,17 +1,15 @@
-from pathlib import Path
-import logging
-import pandas as pd
-from sklearn.model_selection import train_test_split
+import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import logging
+import pandas as pd
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from src.models.cnn_model import CNNModel
 from src.utils.logging_utils import setup_logger
 from typing import Any, List, Optional, Dict
-import json
-
-# ProductDataset is now imported from .datasets
 from .datasets import ProductDataset
 
 def run_training_loop(

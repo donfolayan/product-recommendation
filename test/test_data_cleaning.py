@@ -1,9 +1,9 @@
 import sys
 import os
+import pandas as pd
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.project_utils import setup_project_path
 setup_project_path()
-import pandas as pd
 from src.utils import data_cleaning
 
 def test_clean_quantity():
