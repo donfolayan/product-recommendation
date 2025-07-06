@@ -7,11 +7,12 @@ Tests error conditions, invalid inputs, and boundary conditions.
 import sys
 import tempfile
 import shutil
-from pathlib import Path
 import unittest
 import pandas as pd
 import torch
+import logging
 from src.pipeline import Pipeline, PipelineConfig, ProductDataset
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -55,7 +56,6 @@ class TestPipelineEdgeCases(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test environment."""
-        import logging
         logging.shutdown()
         shutil.rmtree(self.temp_dir)
 

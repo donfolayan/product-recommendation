@@ -8,8 +8,9 @@ import tempfile
 import shutil
 import pandas as pd
 import torch
-from pathlib import Path
+import logging
 import unittest
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 # Add project root to path
@@ -17,6 +18,7 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from src.pipeline import Pipeline, PipelineConfig, ProductDataset
+from src.models.cnn_model import CNNModel
 
 
 class TestPipelineConfig(unittest.TestCase):
@@ -165,7 +167,6 @@ class TestPipeline(unittest.TestCase):
     
     def tearDown(self):
         """Clean up test environment and close log handlers."""
-        import logging
         # Close all handlers for the pipeline's logger and root logger
         loggers = [logging.getLogger(), getattr(self, 'pipeline_logger', None)]
         for logger in loggers:
@@ -252,9 +253,8 @@ class TestPipeline(unittest.TestCase):
             pipeline.load_data()
             
             # Patch only the 'to' method of the CNNModel instance after creation
-            from src.models.cnn_model import CNNModel
             with patch.object(CNNModel, 'to', return_value=MagicMock(spec=CNNModel)) as mock_to:
-                model = pipeline.create_model()
+                pipeline.create_model()
                 mock_to.assert_called()
     
     @patch('src.pipeline.model_training.run_training_loop')
@@ -280,7 +280,6 @@ class TestPipeline(unittest.TestCase):
                 pipeline.prepare_data_loaders()
                 pipeline.create_model = MagicMock()
                 pipeline.model = MagicMock()  # Ensure model is set so train() does not raise
-                import torch
                 pipeline.model.parameters.return_value = [torch.nn.Parameter(torch.randn(2, 2))]
                 pipeline.model.side_effect = lambda x: torch.randn(x.size(0), 2, requires_grad=True)  # batch_size x num_classes
                 pipeline.model.state_dict.return_value = {'layer1.weight': torch.randn(2, 2), 'layer1.bias': torch.randn(2)}
@@ -302,16 +301,6 @@ class TestPipelineIntegration(unittest.TestCase):
     def test_pipeline_imports(self):
         """Test that all pipeline components can be imported."""
         try:
-            from src.pipeline import (
-                Pipeline, 
-                PipelineConfig, 
-                ProductDataset,
-                load_csv,
-                build_image_label_df,
-                train_model,
-                evaluate_model,
-                predict
-            )
             self.assertTrue(True)  # If we get here, imports work
         except ImportError as e:
             self.fail(f"Failed to import pipeline components: {e}")

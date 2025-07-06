@@ -1,7 +1,9 @@
 import json
-from src.utils.project_utils import setup_project_path
-setup_project_path()
 import torch
+from src.utils.project_utils import setup_project_path
+
+setup_project_path()
+
 from pathlib import Path
 from PIL import Image
 from flask import Blueprint, request, jsonify, current_app, Response

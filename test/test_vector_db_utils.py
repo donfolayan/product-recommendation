@@ -1,9 +1,11 @@
-from src.utils.project_utils import setup_project_path
-setup_project_path()
+
 import pytest
-from unittest.mock import patch, MagicMock
 import pandas as pd
 import numpy as np
+import asyncio
+from unittest.mock import patch, MagicMock
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from src.utils.vector_db_utils import VectorDBManager
 
 class DummyModel:
@@ -42,7 +44,7 @@ def test_create_vector_async():
         'Quantity': 2,
         'UnitPrice': 3.0
     })
-    import asyncio
+    
     result = asyncio.run(mgr.create_vector_async(row))
     assert result['id'] == '1'
     assert isinstance(result['values'], list)

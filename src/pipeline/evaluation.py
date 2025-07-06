@@ -1,5 +1,6 @@
-from typing import Any, Tuple
 import torch
+from typing import Any, Tuple
+
 
 
 def evaluate_model(model: Any, test_data: Any, test_labels: Any) -> Tuple[float, dict]:

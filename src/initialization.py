@@ -1,7 +1,7 @@
 import os
+import asyncio
 from src.utils.logging_utils import setup_logger
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
 from typing import Optional, Tuple, Dict
 from src.utils.handwriting_ocr import HandwritingOCR
 from src.utils.vector_db_utils import VectorDBManager

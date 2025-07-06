@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.project_utils import setup_project_path
 setup_project_path()
@@ -8,7 +9,6 @@ from src.utils.enhanced_spell_checker import EnhancedSpellChecker
 class DummyModel:
     def encode(self, text, convert_to_tensor=False):
         # Return a fixed vector for testing
-        import numpy as np
         return np.ones(384)
 
 def test_pattern_correction():

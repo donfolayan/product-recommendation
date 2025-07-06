@@ -1,21 +1,18 @@
+import argparse
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import json
+import traceback
+import pandas as pd
 from src.utils.project_utils import setup_project_path
 setup_project_path()
 from pathlib import Path
 from src.utils.logging_utils import setup_logger
-import argparse
-import pandas as pd
 from sklearn.model_selection import train_test_split
-import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import json
-import traceback
 from typing import Optional, Any, Tuple, Dict
-
-
-
 from src.models.cnn_model import CNNModel
 from src.pipeline.datasets import ProductDataset
 

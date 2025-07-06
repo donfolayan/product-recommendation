@@ -1,5 +1,5 @@
-from pathlib import Path
 import pytest
+from pathlib import Path
 from src.utils.project_utils import setup_project_path
 setup_project_path()
 from src.utils.handwriting_ocr import HandwritingOCR

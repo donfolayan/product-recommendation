@@ -1,10 +1,10 @@
 import sys
 import os
+import io
+import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.utils.project_utils import setup_project_path
 setup_project_path()
-import io
-import pytest
 from app import create_app
 
 flask_app = create_app()

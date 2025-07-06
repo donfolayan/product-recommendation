@@ -1,6 +1,6 @@
+import torch
 from torch.utils.data import Dataset
 from PIL import Image
-import torch
 from torchvision import transforms
 from typing import List, Union, Optional, Any
 from pathlib import Path

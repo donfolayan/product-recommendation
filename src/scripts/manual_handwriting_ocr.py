@@ -1,7 +1,7 @@
 import sys
+import time
 from pathlib import Path
 from datetime import datetime
-import time
 from src.utils.logging_utils import setup_logger
 from src.utils.project_utils import setup_project_path
 

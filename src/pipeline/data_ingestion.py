@@ -1,3 +1,5 @@
+import os
+import glob
 import pandas as pd
 from typing import Optional
 
@@ -21,8 +23,6 @@ def build_image_label_df(images_root: str, stock_code_to_label: dict) -> pd.Data
     Returns:
         pd.DataFrame: DataFrame with columns 'image_path' and 'label'.
     """
-    import os
-    import glob
     image_paths = []
     labels = []
     for stockcode_folder in os.listdir(images_root):

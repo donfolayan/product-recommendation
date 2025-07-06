@@ -1,11 +1,12 @@
+import re
+import torch
 import logging
 from typing import Optional
 from spellchecker import SpellChecker
 from sentence_transformers import SentenceTransformer
 from collections import defaultdict
-import re
 from pathlib import Path
-import torch
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
