@@ -6,10 +6,10 @@ from PIL import Image  # type: ignore
 from pathlib import Path
 from typing import Union, Any, cast
 import cv2
-from .enhanced_spell_checker import EnhancedSpellChecker
+from src.utils.enhanced_spell_checker import EnhancedSpellChecker
 import re
 import google.generativeai as genai  # type: ignore
-from .logging_utils import setup_logger
+from src.utils.logging_utils import setup_logger
 
 # Set up logging
 logger = setup_logger(__name__, Path('logs/handwriting_ocr'))
@@ -35,11 +35,9 @@ class HandwritingOCR:
         self.device = torch.device('cuda' if use_gpu and torch.cuda.is_available() else 'cpu')
         logger.info(f"Using device: {self.device}")
         
-        # Initialize EasyOCR
         self.reader = easyocr.Reader(['en'], gpu=use_gpu)
         logger.info("EasyOCR initialized")
         
-        # Initialize enhanced spell checker
         self.spell_checker = EnhancedSpellChecker()
         logger.info("Spell checker initialized")
 

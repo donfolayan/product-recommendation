@@ -140,7 +140,7 @@ The modular pipeline system provides:
 
 ## Setup Instructions
 ### Prerequisites
-- Python <=3.11
+- Python 3.11 or 3.13 (project tested on both; recommend <=3.13 for best compatibility)
 - Node.js & npm
 - Jupyter for notebooks
 
@@ -267,7 +267,7 @@ curl -X POST http://localhost:5000/api/v1/ocr-query \
 ### Example: Product Detection (Image Upload)
 ```bash
 curl -X POST http://localhost:5000/api/v1/product-detections \
-  -F "file=@path_to_product_image.jpg"
+  -F "image=@path_to_product_image.jpg"
 ```
 
 ---
@@ -280,4 +280,13 @@ curl -X POST http://localhost:5000/api/v1/product-detections \
 - **Tests failing:** Run `pytest -v` for more detailed output.
 - **Image loading errors:** Ensure the static/images directories exist and contain the scraped images.
 - **Notebook path errors:** Make sure to run notebooks from the project root directory.
+
+---
+
+## Data & Model Files
+
+- **Label Mapping Files:**
+  - `src/data/dataset/stock_code_mapping.json`: Maps model output indices to stock codes (used for inference and result mapping).
+  - `src/data/dataset/stock_code_to_product.json`: Maps stock codes to human-readable product names (used for display and recommendations).
+  - These files ensure that model predictions are correctly mapped to product identities and descriptions at inference time.
 

@@ -1,4 +1,5 @@
-import os
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from src.utils.logging_utils import setup_logger
 import requests
 from bs4 import BeautifulSoup
@@ -419,7 +420,6 @@ def scrape_images_from_file(input_file: str) -> None:
         logger.error(traceback.format_exc())
 
 def main() -> None:
-    import sys
     if len(sys.argv) != 2:
         logger.error("Usage: python web_scraping_fix.py <input_file>")
         sys.exit(1)

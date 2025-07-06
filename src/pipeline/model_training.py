@@ -1,9 +1,6 @@
-import os
-import sys
 from pathlib import Path
 import logging
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
@@ -11,9 +8,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from src.models.cnn_model import CNNModel
 from src.utils.logging_utils import setup_logger
-from typing import Any, List, Union, Optional, Dict
+from typing import Any, List, Optional, Dict
 import json
-from PIL import Image
 
 # ProductDataset is now imported from .datasets
 from .datasets import ProductDataset
@@ -35,8 +31,6 @@ def run_training_loop(
     """
     import torch
     from tqdm import tqdm
-    import traceback
-    import os
 
     model_dir.mkdir(parents=True, exist_ok=True)
     best_val_acc = 0.0
@@ -133,7 +127,7 @@ def train_model(
     project_root = Path(project_root)
     log_dir = project_root / 'logs/training'
     logger = setup_logger(__name__, log_dir)
-    data_file = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'
+    data_file = project_root / 'src' / 'data' / 'dataset' / 'final_cnn_training_data.csv'
     df = pd.read_csv(data_file)
     stock_code_to_label = {}
     for _, row in df.iterrows():

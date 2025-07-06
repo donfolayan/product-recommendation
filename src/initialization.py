@@ -13,14 +13,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from src.utils.generate_cnn_csv import generate_final_cnn_training_data
 
-# Set up logging using the project utility
 logger = setup_logger(__name__, Path('logs/app'))
 
 def load_environment():
     """Load environment variables from .env file using utility."""
     load_dotenv()
     # Ensure the CNN training CSV exists
-    csv_path = Path(__file__).parent / 'data' / 'final_cnn_training_data.csv'
+    csv_path = Path(__file__).parent / 'data' / 'dataset' / 'final_cnn_training_data.csv'
     if not csv_path.exists():
         generate_final_cnn_training_data()
 
@@ -58,11 +57,11 @@ async def initialize_services(executor: Optional[ThreadPoolExecutor] = None) -> 
         raise
 
 def initialize_model_and_transform() -> Tuple[CNNModel, Dict[str, str], transforms.Compose]:
-    """Initialize the CNN model, label mapping, and image transform."""
+    """Initialize the CNN model, stock code mapping, and image transform."""
     try:
         model_path = 'models/best_model.pth'
-        label_mapping_path = 'src/data/label_mapping.json'
-        model, label_mapping = load_model(model_path, label_mapping_path)
+        stock_code_mapping_path = 'src/data/dataset/stock_code_mapping.json'
+        model, stock_code_mapping = load_model(model_path, stock_code_mapping_path)
         
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -71,10 +70,9 @@ def initialize_model_and_transform() -> Tuple[CNNModel, Dict[str, str], transfor
         ])
         
         logger.info("Model and transform initialized successfully")
-        return model, label_mapping, transform
+        return model, stock_code_mapping, transform
     except Exception as e:
         logger.error(f"Failed to initialize model and transform: {str(e)}")
         raise
 
-# Initialize model and transform
-model, label_mapping, transform = initialize_model_and_transform() 
+model, stock_code_mapping, transform = initialize_model_and_transform() 

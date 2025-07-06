@@ -1,6 +1,5 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from src.utils.logging_utils import setup_logger
 
 def test_setup_logger_console():

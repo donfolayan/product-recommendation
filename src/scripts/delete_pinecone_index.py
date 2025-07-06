@@ -3,14 +3,11 @@
 from pinecone import Pinecone
 from dotenv import load_dotenv
 import os
-import sys
-from pathlib import Path
 import logging
+from src.utils.project_utils import setup_project_path
 
 # Add project root to path
-project_root = Path(__file__).parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+setup_project_path()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

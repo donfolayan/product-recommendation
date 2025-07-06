@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from typing import Any
 
 class CNNModel(nn.Module):
     """CNN model for product classification"""

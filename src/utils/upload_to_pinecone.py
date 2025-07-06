@@ -21,7 +21,6 @@ FAILED_RECORDS_DIR.mkdir(parents=True, exist_ok=True)
 load_dotenv()
 api_key = os.getenv('PINECONE_API_KEY')
 
-# Initialize Pinecone
 pc = Pinecone(api_key=api_key)
 index_name = "product-vectors"
 
@@ -44,12 +43,10 @@ else:
 # Get the index object
 index = pc.Index(index_name)
 
-# Initialize the sentence transformer model
 print("Loading sentence transformer model...")
 model = SentenceTransformer('all-MiniLM-L6-v2')
 print("Model loaded successfully")
 
-# Load or create progress tracking
 if PROGRESS_FILE.exists():
     uploaded_ids = pd.read_csv(PROGRESS_FILE)['StockCode'].tolist()  # type: ignore
     print(f"Found {len(uploaded_ids)} previously uploaded records")

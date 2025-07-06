@@ -1,4 +1,5 @@
-import sys
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from pathlib import Path
 from src.utils.logging_utils import setup_logger
 import argparse
@@ -7,55 +8,16 @@ from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-import torchvision.transforms as transforms
-from PIL import Image
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 import json
 import traceback
-from typing import List, Union, Optional, Any, Tuple, Dict
+from typing import Optional, Any, Tuple, Dict
 
-project_root = Path(__file__).parent.parent.parent
-sys.path.append(str(project_root))
+
 
 from src.models.cnn_model import CNNModel
-
-class ProductDataset(Dataset):
-    """Dataset for product images"""
-    def __init__(self, image_paths: List[str], labels: List[Union[int, str]], transform: Optional[Any] = None, project_root: Optional[Path] = None) -> None:
-        self.image_paths = image_paths
-        self.labels = labels
-        self.transform = transform or transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
-        self.project_root = project_root
-        
-    def __len__(self) -> int:
-        return len(self.image_paths)
-        
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        try:
-            # Handle both absolute and relative paths
-            img_path = self.image_paths[idx]
-            if self.project_root and not Path(img_path).is_absolute():
-                # Convert Windows backslashes to forward slashes and resolve relative to project root
-                img_path = str(self.project_root / img_path.replace('\\', '/'))
-            else:
-                img_path = str(Path(img_path))
-            
-            image = Image.open(img_path).convert('RGB')
-            if self.transform:
-                image = self.transform(image)
-            label = self.labels[idx]
-            if isinstance(label, tuple):
-                label = label[0]
-            label = torch.tensor(label) if not torch.is_tensor(label) else label
-            return image, label
-        except Exception as e:
-            print(f"Error loading image {self.image_paths[idx]}: {str(e)}")
-            return torch.zeros(3, 224, 224), torch.tensor(0)
+from src.pipeline.datasets import ProductDataset
 
 def train_model(
     model: nn.Module, 
@@ -145,44 +107,37 @@ def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, lear
         log_dir = project_root / 'logs/training'
         logger = setup_logger(__name__, log_dir)
         
-        data_file = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'
+
+        data_file = project_root / 'src' / 'data' / 'dataset' / 'final_cnn_training_data.csv'
+        if not data_file.exists():
+            raise FileNotFoundError(f"Training data file not found: {data_file}")
+        
         df = pd.read_csv(data_file)
+        logger.info(f"Loaded {len(df)} images from CSV")
         
-        stock_code_to_label = {}
+
+        missing_files = []
         for _, row in df.iterrows():
-            stock_code = Path(row['image_path']).parent.name
-            stock_code_to_label[stock_code] = row['label']
+            img_path = project_root / row['image_path']
+            if not img_path.exists():
+                missing_files.append(row['image_path'])
         
-        images_dir = project_root / 'static' / 'images'
-        existing_images = []
+        if missing_files:
+            logger.warning(f"Missing {len(missing_files)} image files. First few: {missing_files[:5]}")
+            # Remove missing files from dataset
+            df = df[~df['image_path'].isin(missing_files)]
+            logger.info(f"After removing missing files: {len(df)} images remaining")
         
-        for stock_code_dir in images_dir.iterdir():
-            if not stock_code_dir.is_dir():
-                continue
-                
-            stock_code = stock_code_dir.name
-            if stock_code not in stock_code_to_label:
-                logger.warning(f"Skipping directory {stock_code} - no label found")
-                continue
-                
-            label = stock_code_to_label[stock_code]
-            
-            for img_path in stock_code_dir.glob('*.jpg'):
-                # Store relative path to match CSV format
-                relative_path = str(img_path.relative_to(project_root)).replace('/', '\\')
-                existing_images.append({
-                    'image_path': relative_path,
-                    'label': label
-                })
+        if len(df) == 0:
+            raise ValueError("No valid images found for training")
         
-        df = pd.DataFrame(existing_images)
-        logger.info(f"Loaded {len(df)} images for training")
-        
+
         class_counts = df['label'].value_counts()
         logger.info("Class distribution:")
         for label, count in class_counts.items():
             logger.info(f"Class {label}: {count} images")
         
+
         min_samples = 2
         valid_classes = class_counts[class_counts >= min_samples].index
         df = df[df['label'].isin(valid_classes)]
@@ -192,9 +147,11 @@ def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, lear
         
         logger.info(f"After filtering, using {len(df)} images from {len(valid_classes)} classes")
         
+
         train_df, val_df = train_test_split(df, test_size=0.2, random_state=42, stratify=df['label'])
-        train_df['label'] = train_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
-        val_df['label'] = val_df['label'].apply(lambda x: x[0] if isinstance(x, tuple) else x)
+        
+        train_df['label'] = train_df['label'].astype(int)
+        val_df['label'] = val_df['label'].astype(int)
         
         train_dataset = ProductDataset(train_df['image_path'].values, train_df['label'].values, project_root=project_root)
         val_dataset = ProductDataset(val_df['image_path'].values, val_df['label'].values, transform=None, project_root=project_root)
@@ -215,15 +172,18 @@ def main(project_root_str: str, batch_size: int = 32, num_epochs: int = 50, lear
         
         logger.info("Training completed successfully")
         
-        mapping_path = model_dir / 'stockcode_to_index.json'
+        label_to_index = {label: idx for idx, label in enumerate(sorted(valid_classes))}
+        mapping_path = model_dir / 'label_mapping.json'
         with open(mapping_path, 'w') as f:
-            json.dump(stock_code_to_label, f)
-        logger.info(f"Saved StockCode-to-index mapping to {mapping_path}")
+            json.dump(label_to_index, f, indent=2)
+        logger.info(f"Saved label mapping to {mapping_path}")
         
         return {
             "best_val_acc": best_val_acc,
             "best_epoch": best_epoch,
-            "num_epochs": num_epochs
+            "num_epochs": num_epochs,
+            "num_classes": num_classes,
+            "total_images": len(df)
         }
         
     except Exception as e:

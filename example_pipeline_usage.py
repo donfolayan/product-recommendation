@@ -8,7 +8,6 @@ This script shows how to:
 3. Handle different scenarios
 """
 
-import sys
 from pathlib import Path
 from src.pipeline import Pipeline, PipelineConfig
 from src.utils.logging_utils import setup_logger

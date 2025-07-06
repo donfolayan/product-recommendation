@@ -3,7 +3,8 @@ models/best_model.pth
 models/checkpoint_epoch_50.pth
 debug
 /models
-
+plan.txt
+fix.txt
 
 
 raw_images/

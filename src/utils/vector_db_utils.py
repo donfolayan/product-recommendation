@@ -4,20 +4,16 @@ from pinecone import Pinecone, ServerlessSpec  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
 from typing import List, Optional, Any
 from pathlib import Path
-from .logging_utils import setup_logger
-import sys
+from src.utils.logging_utils import setup_logger
 from cachetools import TTLCache
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from functools import lru_cache
+from src.utils.project_utils import setup_project_path
 
-# Set up logging
 logger = setup_logger(__name__, Path('logs/vector_db'))
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+setup_project_path()
 
 class VectorDBManager:
     """Manages vector database operations for product data."""
@@ -44,15 +40,12 @@ class VectorDBManager:
         self.model: Optional[SentenceTransformer] = None
         self.uploaded_ids: List[str] = []
         
-        # Setup paths relative to project root
-        self.progress_dir = project_root / 'src' / 'data' / 'vector_db' / 'progress'
-        self.failed_dir = project_root / 'src' / 'data' / 'vector_db' / 'failed'
+        self.progress_dir = Path('src') / 'data' / 'vector_db' / 'progress'
+        self.failed_dir = Path('src') / 'data' / 'vector_db' / 'failed'
         self.progress_file = self.progress_dir / 'upload_progress.csv'
         
-        # Initialize thread pool for async operations
         self.executor = ThreadPoolExecutor(max_workers=4)
         
-        # Initialize caches
         self.vector_cache = TTLCache(maxsize=1000, ttl=3600)  # 1 hour cache
         self.model_cache = TTLCache(maxsize=100, ttl=86400)   # 24 hour cache
         

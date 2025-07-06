@@ -4,15 +4,13 @@ Tests for the modular pipeline components.
 """
 
 import sys
-import os
 import tempfile
 import shutil
+import pandas as pd
+import torch
 from pathlib import Path
 import unittest
 from unittest.mock import patch, MagicMock
-import pandas as pd
-import torch
-import numpy as np
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -135,7 +133,7 @@ class TestPipeline(unittest.TestCase):
         self.project_root = Path(self.temp_dir)
         
         # Create test directory structure
-        (self.project_root / 'src' / 'data').mkdir(parents=True, exist_ok=True)
+        (self.project_root / 'src' / 'data' / 'dataset').mkdir(parents=True, exist_ok=True)
         (self.project_root / 'static' / 'images' / 'test_class').mkdir(parents=True, exist_ok=True)
         (self.project_root / 'static' / 'images' / 'test_class2').mkdir(parents=True, exist_ok=True)
         (self.project_root / 'models').mkdir(parents=True, exist_ok=True)
@@ -155,7 +153,7 @@ class TestPipeline(unittest.TestCase):
             ],
             'label': [0, 0, 0, 0, 1, 1, 1, 1]
         })
-        test_data.to_csv(self.project_root / 'src' / 'data' / 'final_cnn_training_data.csv', index=False)
+        test_data.to_csv(self.project_root / 'src' / 'data' / 'dataset' / 'final_cnn_training_data.csv', index=False)
         
         # Create dummy image files
         for i in range(4):

@@ -1,6 +1,8 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 import io
 import pytest
 from app import create_app
@@ -66,4 +68,31 @@ def test_ocr_query_with_file(client):
         assert 'ocr_result' in data
         assert 'recommendations' in data
     else:
-        assert 'ocr_result' in data or 'message' in data 
+        assert 'ocr_result' in data or 'message' in data
+
+def test_image_detection_no_file(client):
+    resp = client.post('/api/v1/product-detections')
+    assert resp.status_code == 400
+    data = resp.get_json()
+    assert data['status'] == 'error'
+    assert 'No image file provided' in data['message']
+
+def test_image_detection_with_file(client):
+    # Create a dummy image file in memory
+    img_bytes = io.BytesIO()
+    img_bytes.write(b'\x89PNG\r\n\x1a\n')  # PNG header
+    img_bytes.seek(0)
+    data = {'image': (img_bytes, 'test.png')}
+    resp = client.post('/api/v1/product-detections', content_type='multipart/form-data', data=data)
+    # Accept 200 or error if model is not initialized
+    assert resp.status_code in (200, 500, 400)
+    data = resp.get_json()
+    assert 'status' in data
+    if data['status'] == 'success':
+        assert 'data' in data
+        assert 'detected_stock_code' in data['data']
+        assert 'detected_product' in data['data']
+        assert 'confidence' in data['data']
+        assert 'similar_products' in data['data']
+    else:
+        assert 'message' in data 

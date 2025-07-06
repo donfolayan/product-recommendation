@@ -3,14 +3,7 @@ import csv
 import json
 from pathlib import Path
 from typing import Optional
-
-def find_project_root(marker: str = "requirements.txt") -> Path:
-    p = Path.cwd()
-    while not (p / marker).exists() and p != p.parent:
-        p = p.parent
-    if (p / marker).exists():
-        return p
-    raise FileNotFoundError(f"Could not find project root with marker '{marker}' from {Path.cwd()}")
+from src.utils.project_utils import find_project_root
 
 
 def generate_final_cnn_training_data(project_root: Optional[Path] = None) -> None:
@@ -22,8 +15,8 @@ def generate_final_cnn_training_data(project_root: Optional[Path] = None) -> Non
         project_root = find_project_root()
     
     IMAGES_DIR = project_root / 'static' / 'images'
-    LABEL_MAP_PATH = project_root / 'src' / 'data' / 'label_mapping.json'
-    OUTPUT_CSV = project_root / 'src' / 'data' / 'final_cnn_training_data.csv'
+    LABEL_MAP_PATH = project_root / 'src' / 'data' / 'dataset' / 'label_mapping.json'
+    OUTPUT_CSV = project_root / 'src' / 'data' / 'dataset' / 'final_cnn_training_data.csv'
 
     with open(LABEL_MAP_PATH, 'r', encoding='utf-8') as f:
         label_map = json.load(f)

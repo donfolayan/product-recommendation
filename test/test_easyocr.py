@@ -1,16 +1,17 @@
-import logging
 import sys
+import os
 from pathlib import Path
-
-# Add project root to Python path
-project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
-
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from src.utils.handwriting_ocr import HandwritingOCR
+import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+project_root = Path(__file__).parent.parent
 
 def test_easyocr():
     logger.info("Initializing HandwritingOCR with CPU mode...")

@@ -6,8 +6,10 @@ Example script demonstrating the modular pipeline usage.
 import sys
 from pathlib import Path
 import argparse
+from src.utils.project_utils import setup_project_path
 
 # Add project root to path
+setup_project_path()
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
 
@@ -38,7 +40,7 @@ def main():
     
     try:
         results = pipeline.run()
-        print(f"Pipeline completed successfully!")
+        print("Pipeline completed successfully!")
         print(f"Best validation accuracy: {results['best_val_acc']:.2f}%")
         print(f"Best epoch: {results['best_epoch']}")
     except Exception as e:

@@ -1,9 +1,7 @@
-import sys
-import os
 from pathlib import Path
 import pytest
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.project_utils import setup_project_path
+setup_project_path()
 from src.utils.handwriting_ocr import HandwritingOCR
 
 # Directory with test images

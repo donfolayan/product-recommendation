@@ -2,19 +2,14 @@
 Main Pipeline class for orchestrating the complete ML pipeline.
 """
 
-import os
-import sys
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 import json
-import logging
 
-from .data_ingestion import load_csv, build_image_label_df
-from .preprocessing import preprocess_data
-from .model_training import train_model, run_training_loop
+from .model_training import run_training_loop
 from .evaluation import evaluate_model
 from .inference import predict
 from .datasets import ProductDataset
@@ -27,7 +22,7 @@ class PipelineConfig:
     
     def __init__(self, **kwargs):
         # Data parameters
-        self.data_file = kwargs.get('data_file', 'src/data/final_cnn_training_data.csv')
+        self.data_file = kwargs.get('data_file', 'src/data/dataset/final_cnn_training_data.csv')
         self.images_dir = kwargs.get('images_dir', 'static/images')
         self.min_samples_per_class = kwargs.get('min_samples_per_class', 2)
         
@@ -118,7 +113,6 @@ class Pipeline:
         log_dir.mkdir(parents=True, exist_ok=True)
         self.logger = setup_logger('pipeline', log_dir=log_dir)
         
-        # Initialize state
         self.data = None
         self.model = None
         self.train_loader = None

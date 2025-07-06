@@ -22,7 +22,7 @@ def create_app() -> Flask:
     load_environment()
     executor = create_thread_pool(max_workers=4)
 
-    # Initialize Flask app
+    
     app = Flask(__name__)
     CORS(app)
 

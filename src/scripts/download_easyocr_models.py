@@ -2,15 +2,18 @@ import sys
 from pathlib import Path
 import easyocr
 from src.utils.logging_utils import setup_logger
+from src.utils.project_utils import setup_project_path
 
 # Set up logging using the project utility
 logger = setup_logger(__name__, Path('logs/app'))
+
+setup_project_path()
 
 def setup_easyocr_models():
     """Download and set up EasyOCR English model."""
     try:
         logger.info("Initializing EasyOCR with English model...")
-        reader = easyocr.Reader(['en'])
+        easyocr.Reader(['en'])
         
         # Get the model directory
         model_dir = Path.home() / ".cache" / "handwriting_ocr"

@@ -36,13 +36,10 @@ class RecommendationService:
         self.max_query_length = 500
         self.min_query_length = 3
         
-        # Initialize thread pool for async operations
         self.executor = ThreadPoolExecutor(max_workers=4)
         
-        # Initialize cache with longer TTL for better performance
         self.cache = TTLCache(maxsize=2000, ttl=7200)  # 2 hour cache
         
-        # Initialize Gemini with rate limiting
         self.gemini_api_key = os.getenv('GEMINI_API_KEY')
         if self.gemini_api_key:
             genai.configure(api_key=self.gemini_api_key)
